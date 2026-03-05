@@ -1,0 +1,9 @@
+[user]
+	name = Sebastien Villar
+	email = svillar@figma.com
+[push]
+	autoSetupRemote = true
+[core]
+	excludesfile = ~/.gitignore_global
+[include]
+	path = ~/.gitconfig.local

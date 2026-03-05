@@ -1,0 +1,27 @@
+{
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "go.toolsManagement.autoUpdate": true,
+  "typescript.tsserver.maxTsServerMemory": 6144,
+  "typescript.tsserver.nodePath": "node",
+  "[dockercompose]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "diffEditor.renderSideBySide": false,
+  "security.workspace.trust.enabled": true,
+  "remote.SSH.connectTimeout": 1800,
+  "remote.autoForwardPortsSource": "hybrid",
+  "lldb.suppressUpdateNotifications": true,
+  "gitlens.rebaseEditor.openOnPausedRebase": false
+}

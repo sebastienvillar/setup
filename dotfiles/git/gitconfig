@@ -1,0 +1,10 @@
+[user]
+	name = Sebastien Villar
+	email = me@sebastienvillar.com
+[push]
+	autoSetupRemote = true
+[core]
+	editor = cursor --wait
+	excludesfile = ~/.gitignore_global
+[include]
+	path = ~/.gitconfig.local
