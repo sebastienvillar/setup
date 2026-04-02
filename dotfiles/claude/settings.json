@@ -22,6 +22,19 @@
     "defaultMode": "acceptEdits",
     "disableBypassPermissionsMode": "disable"
   },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\a'"
+          }
+        ]
+      }
+    ]
+  },
   "model": "opus[1m]",
   "enabledPlugins": {
     "figma-security-guidance@figma-internal": true,
