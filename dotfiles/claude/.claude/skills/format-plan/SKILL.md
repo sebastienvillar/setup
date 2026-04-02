@@ -1,5 +1,5 @@
 ---
-name: plan
+name: format-plan
 description: Format and present a final implementation plan. Use when the user asks to create, write, or finalize an implementation plan for a feature, refactor, or project.
 argument-hint: [description of what to plan]
 ---
