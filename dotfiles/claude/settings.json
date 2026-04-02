@@ -1,4 +1,36 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "model": "opus"
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(pnpm run *)",
+      "Bash(npm test *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm i *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git commit *)",
+      "Bash(npx vitest *)",
+      "Read",
+      "Edit(/src/**)",
+      "Write(/src/**)"
+    ],
+    "ask": [
+      "Bash(git push *)"
+    ],
+    "defaultMode": "acceptEdits",
+    "disableBypassPermissionsMode": "disable"
+  },
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "figma-security-guidance@figma-internal": true,
+    "figma-plugin-staging@figma-internal": true,
+    "fix-a11y@figma-internal": true,
+    "prodsec@figma-internal": true,
+    "testing@figma-internal": true,
+    "coder-tools@figma-internal": true,
+    "update-dependency@figma-internal": true,
+    "figma-plugin@figma-internal": true
+  }
 }

@@ -11,3 +11,4 @@ brew install \
   node \
   zsh-syntax-highlighting \
   zsh-autosuggestions \
+  micro \

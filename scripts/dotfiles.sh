@@ -49,6 +49,13 @@ install_claude() {
   else
     link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
   fi
+  if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
+    for item in "$DOTFILES_DIR/claude/.claude"/*; do
+      local name
+      name="$(basename "$item")"
+      link "$item" "$HOME/.claude/$name"
+    done
+  fi
 }
 
 uninstall() {
@@ -57,6 +64,11 @@ uninstall() {
   safe_unlink "$HOME/.gitconfig"
   safe_unlink "$HOME/.gitignore_global"
   safe_unlink "$HOME/.claude/settings.json"
+  if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
+    for item in "$DOTFILES_DIR/claude/.claude"/*; do
+      safe_unlink "$HOME/.claude/$(basename "$item")"
+    done
+  fi
   echo "Done. Dotfile symlinks removed."
 }
 
