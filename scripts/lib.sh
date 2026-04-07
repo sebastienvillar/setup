@@ -16,7 +16,7 @@ backup() {
     local relative="${file#$HOME/}"
     local backup_path="$BACKUP_DIR/$relative"
     mkdir -p "$(dirname "$backup_path")"
-    cp "$file" "$backup_path"
+    cp -r "$file" "$backup_path"
     echo "  Backed up $file"
   fi
 }
@@ -31,14 +31,14 @@ copy() {
     fi
   fi
   backup "$dst"
-  rm -f "$dst"
-  cp "$src" "$dst"
+  rm -rf "$dst"
+  cp -r "$src" "$dst"
 }
 
 safe_remove() {
   local file="$1"
   if [[ -e "$file" || -L "$file" ]]; then
-    rm -f "$file"
+    rm -rf "$file"
   fi
 }
 
