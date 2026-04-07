@@ -12,3 +12,4 @@ brew install \
   zsh-syntax-highlighting \
   zsh-autosuggestions \
   micro \
+  dtach \
