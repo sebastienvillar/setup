@@ -4,11 +4,21 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_SCRIPTS_DIR="$SCRIPT_DIR/../scripts"
+NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
 
 install() {
   echo "Installing scripts..."
   mkdir -p "$HOME/.local/bin"
-  cp "$REPO_SCRIPTS_DIR/terminal-title.sh" "$HOME/.local/bin/terminal-title"
+  local dst="$HOME/.local/bin/terminal-title"
+  if [[ -e "$dst" && ! -L "$dst" && "$NON_INTERACTIVE" == false ]]; then
+    read -rp "Overwrite $dst? [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+      echo "  Skipped $dst"
+      return
+    fi
+  fi
+  rm -f "$dst"
+  cp "$REPO_SCRIPTS_DIR/terminal-title.sh" "$dst"
 }
 
 uninstall() {
@@ -18,6 +28,12 @@ uninstall() {
     rm -f "$target"
   fi
 }
+
+for arg in "$@"; do
+  case "$arg" in
+    --yes|-y) NON_INTERACTIVE=true ;;
+  esac
+done
 
 cmd="${1:-install}"
 case "$cmd" in

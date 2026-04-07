@@ -69,6 +69,7 @@ show_help() {
 for arg in "$@"; do
   case "$arg" in
     --no-backup) NO_BACKUP=true ;;
+    --yes|-y) NON_INTERACTIVE=true ;;
   esac
 done
 

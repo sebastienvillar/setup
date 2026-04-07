@@ -33,7 +33,7 @@ install_git() {
   else
     copy "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
   fi
-  copy "$DOTFILES_DIR/git/gitignore_global" "$HOME/.gitignore_global"
+
   if [[ ! -f "$HOME/.gitconfig.local" ]]; then
     printf '[user]\n\temail = \n' > "$HOME/.gitconfig.local"
     echo "Created ~/.gitconfig.local — set your email there."
@@ -62,7 +62,7 @@ uninstall() {
   echo "Removing dotfiles..."
   safe_remove "$HOME/.zshrc"
   safe_remove "$HOME/.gitconfig"
-  safe_remove "$HOME/.gitignore_global"
+
   safe_remove "$HOME/.claude/settings.json"
   if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
     for item in "$DOTFILES_DIR/claude/.claude"/*; do
@@ -105,6 +105,7 @@ for arg in "$@"; do
   case "$arg" in
     --devbox) DEVBOX=true ;;
     --no-backup) NO_BACKUP=true ;;
+    --yes|-y) NON_INTERACTIVE=true ;;
   esac
 done
 

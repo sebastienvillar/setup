@@ -25,6 +25,9 @@
     "defaultMode": "acceptEdits",
     "disableBypassPermissionsMode": "disable"
   },
+  "env": {
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
   "model": "opus[1m]",
   "hooks": {
     "UserPromptSubmit": [

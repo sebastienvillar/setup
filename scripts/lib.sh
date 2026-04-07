@@ -4,6 +4,7 @@
 # Source this file and set BACKUP_BASE before using.
 
 NO_BACKUP="${NO_BACKUP:-false}"
+NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
 
 backup() {
   local file="$1"
@@ -22,7 +23,15 @@ backup() {
 
 copy() {
   local src="$1" dst="$2"
+  if [[ -e "$dst" && ! -L "$dst" && "$NON_INTERACTIVE" == false ]]; then
+    read -rp "Overwrite $dst? [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+      echo "  Skipped $dst"
+      return
+    fi
+  fi
   backup "$dst"
+  rm -f "$dst"
   cp "$src" "$dst"
 }
 

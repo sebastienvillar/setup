@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTFILES_ARGS="install"
 CONFIGS_ARGS="install"
+SCRIPTS_ARGS="install"
 NON_INTERACTIVE=false
 RUN_BREW=false
 RUN_DOTFILES=false
@@ -19,7 +20,7 @@ for arg in "$@"; do
     --configs) RUN_CONFIGS=true ;;
     --devbox) DOTFILES_ARGS="$DOTFILES_ARGS --devbox" ;;
     --no-backup) DOTFILES_ARGS="$DOTFILES_ARGS --no-backup"; CONFIGS_ARGS="$CONFIGS_ARGS --no-backup" ;;
-    --yes|-y) NON_INTERACTIVE=true ;;
+    --yes|-y) NON_INTERACTIVE=true; DOTFILES_ARGS="$DOTFILES_ARGS --yes"; CONFIGS_ARGS="$CONFIGS_ARGS --yes"; SCRIPTS_ARGS="$SCRIPTS_ARGS --yes" ;;
     --help|-h)
       echo "Usage: install.sh [OPTIONS]"
       echo ""
@@ -73,7 +74,7 @@ fi
 
 if [[ "$RUN_SCRIPTS" == true ]]; then
   echo "==> Installing scripts..."
-  bash "$SCRIPT_DIR/scripts/scripts.sh"
+  bash "$SCRIPT_DIR/scripts/scripts.sh" $SCRIPTS_ARGS
 fi
 
 if [[ "$RUN_CONFIGS" == true ]]; then
