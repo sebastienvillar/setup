@@ -1,8 +1,9 @@
 #!/bin/bash
 # Sets the terminal title with optional coder and claude indicators.
-# Usage: terminal-title.sh [working|waiting]
-#   working  - Claude is processing a prompt (🤖)
-#   waiting  - Claude finished, waiting for input (🔔)
+# Usage: terminal-title.sh [working|stopped|waiting]
+#   working  - Claude is processing (🤖)
+#   stopped  - Claude is done (⏸️)
+#   waiting  - Claude needs input (🔔)
 #   (empty)  - No claude session
 
 claude_state="${1:-}"
@@ -31,6 +32,7 @@ fi
 claude_emoji=""
 case "$claude_state" in
   working) claude_emoji="🤖";;
+  stopped) claude_emoji="⏸️";;
   waiting) claude_emoji="🔔";;
 esac
 
