@@ -23,6 +23,39 @@
     "disableBypassPermissionsMode": "disable"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$TERMINAL_TITLE_SCRIPT working"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$TERMINAL_TITLE_SCRIPT waiting"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$TERMINAL_TITLE_SCRIPT"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",

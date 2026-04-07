@@ -33,9 +33,14 @@ fi
 if [[ -n "${FIGMA_CODER_WORKSPACE_NAME:-}" ]]; then
   PROMPT="%(?:%{$fg_bold[green]%}%1{➜%} :%{$fg_bold[red]%}%1{➜%} ) %{$fg[magenta]%}${FIGMA_CODER_WORKSPACE_NAME}%{$reset_color%} %{$fg[cyan]%}%c%{$reset_color%}"
   PROMPT+=' $(git_prompt_info)'
-  ZSH_THEME_TERM_TITLE_IDLE="${FIGMA_CODER_WORKSPACE_NAME}"
-  ZSH_THEME_TERM_TAB_TITLE_IDLE="${FIGMA_CODER_WORKSPACE_NAME}"
 fi
+
+# --- Terminal title ---
+DISABLE_AUTO_TITLE=true
+export TERMINAL_TITLE_SCRIPT="${TERMINAL_TITLE_SCRIPT:-$HOME/setup/scripts/terminal-title.sh}"
+_update_terminal_title() { [[ -x "$TERMINAL_TITLE_SCRIPT" ]] && "$TERMINAL_TITLE_SCRIPT"; }
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _update_terminal_title
 
 # --- Machine-specific overrides ---
 # Source local config if it exists (not tracked by git)
