@@ -1,5 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
   "permissions": {
     "allow": [
       "Bash(npm run *)",
@@ -22,6 +25,7 @@
     "defaultMode": "acceptEdits",
     "disableBypassPermissionsMode": "disable"
   },
+  "model": "opus[1m]",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -29,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$TERMINAL_TITLE_SCRIPT working"
+            "command": "$HOME/.local/bin/terminal-title working"
           }
         ]
       }
@@ -40,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$TERMINAL_TITLE_SCRIPT waiting"
+            "command": "$HOME/.local/bin/terminal-title waiting"
           }
         ]
       }
@@ -51,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$TERMINAL_TITLE_SCRIPT"
+            "command": "$HOME/.local/bin/terminal-title"
           }
         ]
       }
@@ -68,7 +72,6 @@
       }
     ]
   },
-  "model": "opus[1m]",
   "enabledPlugins": {
     "figma-security-guidance@figma-internal": true,
     "figma-plugin-staging@figma-internal": true,
@@ -77,6 +80,7 @@
     "testing@figma-internal": true,
     "coder-tools@figma-internal": true,
     "update-dependency@figma-internal": true,
-    "figma-plugin@figma-internal": true
+    "figma-plugin@figma-internal": true,
+    "rust-analyzer-lsp@claude-plugins-official": true
   }
 }

@@ -48,5 +48,6 @@ fi
 location=$(git symbolic-ref --short HEAD 2>/dev/null || basename "${PWD:-}")
 
 # --- Set title ---
-printf '\e]2;%s%s\a' "$prefix" "$location"
-printf '\e]1;%s%s\a' "$prefix" "$location"
+tty_device=$(tty 2>/dev/null) || tty_device="/dev/tty"
+printf '\e]2;%s%s\a' "$prefix" "$location" > "$tty_device"
+printf '\e]1;%s%s\a' "$prefix" "$location" > "$tty_device"

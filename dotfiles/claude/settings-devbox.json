@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$TERMINAL_TITLE_SCRIPT working"
+            "command": "$HOME/.local/bin/terminal-title working"
           }
         ]
       }
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$TERMINAL_TITLE_SCRIPT waiting"
+            "command": "$HOME/.local/bin/terminal-title waiting"
           }
         ]
       }
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$TERMINAL_TITLE_SCRIPT"
+            "command": "$HOME/.local/bin/terminal-title"
           }
         ]
       }
