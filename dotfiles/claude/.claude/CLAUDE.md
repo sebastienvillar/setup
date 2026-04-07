@@ -99,3 +99,4 @@ After implementing each step of a plan:
 # Pull requests
 
 - PR descriptions should only describe the intent of the changes, not summarize code changes or include code pointers. Reviewers can see the changed files themselves.
+- For stacked PRs, prepend the title with `[partX]` (e.g. `[part1] web: Display dev server logs in console drawer`). When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers.
