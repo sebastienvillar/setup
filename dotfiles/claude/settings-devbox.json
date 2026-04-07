@@ -6,6 +6,17 @@
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.local/bin/terminal-title stopped"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
@@ -35,6 +46,17 @@
           {
             "type": "command",
             "command": "$HOME/.local/bin/terminal-title"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.local/bin/terminal-title waiting"
           }
         ]
       }

@@ -27,6 +27,17 @@
   },
   "model": "opus[1m]",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.local/bin/terminal-title stopped"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
@@ -56,6 +67,17 @@
           {
             "type": "command",
             "command": "$HOME/.local/bin/terminal-title"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.local/bin/terminal-title waiting"
           }
         ]
       }
