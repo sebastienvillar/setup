@@ -82,13 +82,24 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.local/bin/terminal-title working"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.local/bin/terminal-title waiting && printf '\\a'"
+            "command": "printf '\\a'"
           }
         ]
       }
