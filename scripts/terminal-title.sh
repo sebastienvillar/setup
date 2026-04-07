@@ -44,8 +44,20 @@ elif [[ -n "$claude_emoji" ]]; then
   prefix="${claude_emoji} "
 fi
 
-# --- Location: git branch or directory ---
-location=$(git symbolic-ref --short HEAD 2>/dev/null || basename "${PWD:-}")
+# --- Location ---
+if [[ -n "${FIGMA_CODER_WORKSPACE_NAME:-}" ]]; then
+  # Coder: just show the branch
+  location=$(git symbolic-ref --short HEAD 2>/dev/null || basename "${PWD:-}")
+else
+  # Local: show directory, with branch in parentheses if in a git repo
+  dir=$(basename "${PWD:-}")
+  branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+  if [[ -n "$branch" ]]; then
+    location="${dir} (${branch})"
+  else
+    location="$dir"
+  fi
+fi
 
 # --- Set title ---
 tty_device=$(tty 2>/dev/null) || tty_device="/dev/tty"

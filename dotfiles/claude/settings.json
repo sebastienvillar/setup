@@ -25,9 +25,6 @@
     "defaultMode": "acceptEdits",
     "disableBypassPermissionsMode": "disable"
   },
-  "env": {
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
-  },
   "model": "opus[1m]",
   "hooks": {
     "UserPromptSubmit": [
@@ -84,6 +81,7 @@
     "coder-tools@figma-internal": true,
     "update-dependency@figma-internal": true,
     "figma-plugin@figma-internal": true,
-    "rust-analyzer-lsp@claude-plugins-official": true
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }
