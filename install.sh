@@ -11,6 +11,7 @@ RUN_BREW=false
 RUN_DOTFILES=false
 RUN_SCRIPTS=false
 RUN_CONFIGS=false
+DEVBOX=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -18,7 +19,7 @@ for arg in "$@"; do
     --dotfiles) RUN_DOTFILES=true ;;
     --scripts) RUN_SCRIPTS=true ;;
     --configs) RUN_CONFIGS=true ;;
-    --devbox) DOTFILES_ARGS="$DOTFILES_ARGS --devbox" ;;
+    --devbox) DEVBOX=true; DOTFILES_ARGS="$DOTFILES_ARGS --devbox" ;;
     --no-backup) DOTFILES_ARGS="$DOTFILES_ARGS --no-backup"; CONFIGS_ARGS="$CONFIGS_ARGS --no-backup" ;;
     --yes|-y) NON_INTERACTIVE=true; DOTFILES_ARGS="$DOTFILES_ARGS --yes"; CONFIGS_ARGS="$CONFIGS_ARGS --yes"; SCRIPTS_ARGS="$SCRIPTS_ARGS --yes" ;;
     --help|-h)
@@ -64,7 +65,11 @@ fi
 
 if [[ "$RUN_BREW" == true ]]; then
   echo "==> Installing Homebrew packages..."
-  bash "$SCRIPT_DIR/scripts/brew.sh"
+  if [[ "$DEVBOX" == true ]]; then
+    bash "$SCRIPT_DIR/scripts/brew-devbox.sh"
+  else
+    bash "$SCRIPT_DIR/scripts/brew.sh"
+  fi
 fi
 
 if [[ "$RUN_DOTFILES" == true ]]; then
