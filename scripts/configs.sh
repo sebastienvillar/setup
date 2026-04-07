@@ -20,24 +20,24 @@ fi
 install_cursor() {
   echo "Installing Cursor settings..."
   mkdir -p "$CURSOR_SETTINGS_DIR"
-  link "$CONFIGS_DIR/cursor/settings.json" "$CURSOR_SETTINGS_DIR/settings.json"
-  link "$CONFIGS_DIR/cursor/keybindings.json" "$CURSOR_SETTINGS_DIR/keybindings.json"
+  copy "$CONFIGS_DIR/cursor/settings.json" "$CURSOR_SETTINGS_DIR/settings.json"
+  copy "$CONFIGS_DIR/cursor/keybindings.json" "$CURSOR_SETTINGS_DIR/keybindings.json"
 }
 
 install_vscode() {
   echo "Installing VS Code settings..."
   mkdir -p "$VSCODE_SETTINGS_DIR"
-  link "$CONFIGS_DIR/vscode/settings.json" "$VSCODE_SETTINGS_DIR/settings.json"
-  link "$CONFIGS_DIR/vscode/keybindings.json" "$VSCODE_SETTINGS_DIR/keybindings.json"
+  copy "$CONFIGS_DIR/vscode/settings.json" "$VSCODE_SETTINGS_DIR/settings.json"
+  copy "$CONFIGS_DIR/vscode/keybindings.json" "$VSCODE_SETTINGS_DIR/keybindings.json"
 }
 
 uninstall() {
-  echo "Removing config symlinks..."
-  safe_unlink "$CURSOR_SETTINGS_DIR/settings.json"
-  safe_unlink "$CURSOR_SETTINGS_DIR/keybindings.json"
-  safe_unlink "$VSCODE_SETTINGS_DIR/settings.json"
-  safe_unlink "$VSCODE_SETTINGS_DIR/keybindings.json"
-  echo "Done. Config symlinks removed."
+  echo "Removing config files..."
+  safe_remove "$CURSOR_SETTINGS_DIR/settings.json"
+  safe_remove "$CURSOR_SETTINGS_DIR/keybindings.json"
+  safe_remove "$VSCODE_SETTINGS_DIR/settings.json"
+  safe_remove "$VSCODE_SETTINGS_DIR/keybindings.json"
+  echo "Done. Config files removed."
 }
 
 restore() {
@@ -58,7 +58,7 @@ show_help() {
   echo "  install     Install all editor configs (default)"
   echo "  cursor      Install Cursor editor settings"
   echo "  vscode      Install VS Code editor settings"
-  echo "  uninstall   Remove config symlinks"
+  echo "  uninstall   Remove config files"
   echo "  restore     Restore files from latest backup"
   echo "  help        Show this help"
   echo ""

@@ -8,16 +8,14 @@ REPO_SCRIPTS_DIR="$SCRIPT_DIR/../scripts"
 install() {
   echo "Installing scripts..."
   mkdir -p "$HOME/.local/bin"
-  ln -sf "$REPO_SCRIPTS_DIR/terminal-title.sh" "$HOME/.local/bin/terminal-title"
+  cp "$REPO_SCRIPTS_DIR/terminal-title.sh" "$HOME/.local/bin/terminal-title"
 }
 
 uninstall() {
-  echo "Removing script symlinks..."
+  echo "Removing scripts..."
   local target="$HOME/.local/bin/terminal-title"
-  if [[ -L "$target" ]]; then
+  if [[ -e "$target" ]]; then
     rm -f "$target"
-  elif [[ -e "$target" ]]; then
-    echo "Warning: $target is not a symlink, skipping"
   fi
 }
 

@@ -45,5 +45,3 @@ add-zsh-hook precmd _update_terminal_title
 # --- Machine-specific overrides ---
 # Source local config if it exists (not tracked by git)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
-eval "$(rbenv init -)"
-export RACK_ENV=development

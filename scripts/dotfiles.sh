@@ -23,17 +23,17 @@ install_zsh() {
     echo "Installing zsh-syntax-highlighting..."
     git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
   fi
-  link "$DOTFILES_DIR/zsh/zshrc" "$HOME/.zshrc"
+  copy "$DOTFILES_DIR/zsh/zshrc" "$HOME/.zshrc"
 }
 
 install_git() {
   echo "Installing git config..."
   if [[ "$DEVBOX" == true ]]; then
-    link "$DOTFILES_DIR/git/gitconfig-devbox" "$HOME/.gitconfig"
+    copy "$DOTFILES_DIR/git/gitconfig-devbox" "$HOME/.gitconfig"
   else
-    link "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
+    copy "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
   fi
-  link "$DOTFILES_DIR/git/gitignore_global" "$HOME/.gitignore_global"
+  copy "$DOTFILES_DIR/git/gitignore_global" "$HOME/.gitignore_global"
   if [[ ! -f "$HOME/.gitconfig.local" ]]; then
     printf '[user]\n\temail = \n' > "$HOME/.gitconfig.local"
     echo "Created ~/.gitconfig.local — set your email there."
@@ -45,31 +45,31 @@ install_claude() {
   mkdir -p "$HOME/.claude"
   if [[ "$DEVBOX" == true ]]; then
     echo "Using devbox Claude settings..."
-    link "$DOTFILES_DIR/claude/settings-devbox.json" "$HOME/.claude/settings.json"
+    copy "$DOTFILES_DIR/claude/settings-devbox.json" "$HOME/.claude/settings.json"
   else
-    link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
+    copy "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
   fi
   if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
     for item in "$DOTFILES_DIR/claude/.claude"/*; do
       local name
       name="$(basename "$item")"
-      link "$item" "$HOME/.claude/$name"
+      copy "$item" "$HOME/.claude/$name"
     done
   fi
 }
 
 uninstall() {
-  echo "Removing dotfile symlinks..."
-  safe_unlink "$HOME/.zshrc"
-  safe_unlink "$HOME/.gitconfig"
-  safe_unlink "$HOME/.gitignore_global"
-  safe_unlink "$HOME/.claude/settings.json"
+  echo "Removing dotfiles..."
+  safe_remove "$HOME/.zshrc"
+  safe_remove "$HOME/.gitconfig"
+  safe_remove "$HOME/.gitignore_global"
+  safe_remove "$HOME/.claude/settings.json"
   if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
     for item in "$DOTFILES_DIR/claude/.claude"/*; do
-      safe_unlink "$HOME/.claude/$(basename "$item")"
+      safe_remove "$HOME/.claude/$(basename "$item")"
     done
   fi
-  echo "Done. Dotfile symlinks removed."
+  echo "Done. Dotfiles removed."
 }
 
 restore() {
@@ -92,7 +92,7 @@ show_help() {
   echo "  zsh         Install zsh config"
   echo "  git         Install git config"
   echo "  claude      Install Claude settings"
-  echo "  uninstall   Remove dotfile symlinks"
+  echo "  uninstall   Remove installed dotfiles"
   echo "  restore     Restore files from latest backup"
   echo "  help        Show this help"
   echo ""

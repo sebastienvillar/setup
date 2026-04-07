@@ -10,7 +10,7 @@ backup() {
   if [[ "$NO_BACKUP" == true ]]; then
     return
   fi
-  if [[ -e "$file" && ! -L "$file" ]]; then
+  if [[ -e "$file" ]]; then
     mkdir -p "$BACKUP_DIR"
     local relative="${file#$HOME/}"
     local backup_path="$BACKUP_DIR/$relative"
@@ -20,18 +20,16 @@ backup() {
   fi
 }
 
-link() {
+copy() {
   local src="$1" dst="$2"
   backup "$dst"
-  ln -sf "$src" "$dst"
+  cp "$src" "$dst"
 }
 
-safe_unlink() {
+safe_remove() {
   local file="$1"
-  if [[ -L "$file" ]]; then
+  if [[ -e "$file" || -L "$file" ]]; then
     rm -f "$file"
-  elif [[ -e "$file" ]]; then
-    echo "Warning: $file is not a symlink, skipping"
   fi
 }
 
