@@ -93,10 +93,15 @@ After implementing each step of a plan:
 # Git workflows
 
 - Use aviator CLI (av) to create stacked branches/pull requests.
+- Branch naming:
+  - Single branch: `seb/<short-description>`
+  - Stacked branches: `seb/<project-name>-<partX>-<short-description>`
 
 ---
 
 # Pull requests
 
 - PR descriptions should only describe the intent of the changes, not summarize code changes or include code pointers. Reviewers can see the changed files themselves.
-- For stacked PRs, prepend the title with `[partX]` (e.g. `[part1] web: Display dev server logs in console drawer`). When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers.
+- PR title naming:
+  - Single PR: `<short-description>`
+  - Stacked PRs: `<project-name> [partX] <short-description>`. When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers.
