@@ -25,3 +25,4 @@ brew install \
   zsh-autosuggestions \
   micro \
   dtach \
+  aviator-co/tap/av \

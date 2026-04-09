@@ -14,4 +14,6 @@ if ! command -v brew &>/dev/null; then
   fi
 fi
 
-brew install dtach
+brew install \
+  dtach \
+  aviator-co/tap/av \

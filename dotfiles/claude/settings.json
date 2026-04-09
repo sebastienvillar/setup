@@ -105,7 +105,16 @@
       }
     ]
   },
+  "extraKnownMarketplaces": {
+    "aviator-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "aviator-co/agent-plugins"
+      }
+    }
+  },
   "enabledPlugins": {
+    "av-cli@aviator-plugins": true,
     "figma-security-guidance@figma-internal": true,
     "figma-plugin-staging@figma-internal": true,
     "fix-a11y@figma-internal": true,
