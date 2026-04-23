@@ -15,6 +15,9 @@ After creating or significantly revising an implementation plan:
 
 # Plan execution
 
+During implementation:
+- Comments must not break encapsulation (i.e. comment on a function definition should not expose how the function is implemented but only it's goal)
+
 After implementing each step of a plan:
 1. Run the relevant verification tools for the code that was changed (e.g. tests, `tsc`, `eslint`, and other applicable tools for those changes).
 2. Fix any issues before moving on.
