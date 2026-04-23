@@ -49,13 +49,14 @@ install_claude() {
   else
     copy "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
   fi
-  if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
-    for item in "$DOTFILES_DIR/claude/.claude"/*; do
-      local name
-      name="$(basename "$item")"
-      copy "$item" "$HOME/.claude/$name"
-    done
-  fi
+  for item in "$DOTFILES_DIR/claude"/*; do
+    local name
+    name="$(basename "$item")"
+    case "$name" in
+      settings.json|settings-devbox.json) continue ;;
+    esac
+    copy "$item" "$HOME/.claude/$name"
+  done
 }
 
 uninstall() {
@@ -64,11 +65,14 @@ uninstall() {
   safe_remove "$HOME/.gitconfig"
 
   safe_remove "$HOME/.claude/settings.json"
-  if [[ -d "$DOTFILES_DIR/claude/.claude" ]]; then
-    for item in "$DOTFILES_DIR/claude/.claude"/*; do
-      safe_remove "$HOME/.claude/$(basename "$item")"
-    done
-  fi
+  for item in "$DOTFILES_DIR/claude"/*; do
+    local name
+    name="$(basename "$item")"
+    case "$name" in
+      settings.json|settings-devbox.json) continue ;;
+    esac
+    safe_remove "$HOME/.claude/$name"
+  done
   echo "Done. Dotfiles removed."
 }
 
