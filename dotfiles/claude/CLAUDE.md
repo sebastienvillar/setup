@@ -6,7 +6,7 @@ When creating implementation plans (including in plan mode), always add an "Inte
 
 # Plan saving
 
-Save the plan to the [figma/svillar](https://github.com/figma/svillar) GitHub repository when explicitly requested, or once the plan is finalized and prior to execution.
+Save the plan to the [figma/svillar](https://github.com/figma/svillar) GitHub repository when explicitly requested, or once the plan is finalized and prior to execution. Once the plan is saved, print the github link to the file
 
 Name the file using this format: `yyyy-mm-dd-<description>`
 
