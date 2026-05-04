@@ -15,5 +15,5 @@ if ! command -v brew &>/dev/null; then
 fi
 
 brew install \
-  abduco \
+  tmux \
   aviator-co/tap/av \

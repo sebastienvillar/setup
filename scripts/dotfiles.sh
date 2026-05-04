@@ -40,6 +40,11 @@ install_git() {
   fi
 }
 
+install_tmux() {
+  echo "Installing tmux config..."
+  copy "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
+}
+
 install_claude() {
   echo "Installing Claude settings..."
   mkdir -p "$HOME/.claude"
@@ -63,6 +68,7 @@ uninstall() {
   echo "Removing dotfiles..."
   safe_remove "$HOME/.zshrc"
   safe_remove "$HOME/.gitconfig"
+  safe_remove "$HOME/.tmux.conf"
 
   safe_remove "$HOME/.claude/settings.json"
   for item in "$DOTFILES_DIR/claude"/*; do
@@ -85,6 +91,7 @@ install_all() {
   init_backup
   install_zsh
   install_git
+  install_tmux
   install_claude
 }
 
@@ -95,6 +102,7 @@ show_help() {
   echo "  install     Install all dotfiles (default)"
   echo "  zsh         Install zsh config"
   echo "  git         Install git config"
+  echo "  tmux        Install tmux config"
   echo "  claude      Install Claude settings"
   echo "  uninstall   Remove installed dotfiles"
   echo "  restore     Restore files from latest backup"
@@ -118,6 +126,7 @@ case "$cmd" in
   install)   install_all ;;
   zsh)       install_zsh ;;
   git)       install_git ;;
+  tmux)      install_tmux ;;
   claude)    install_claude ;;
   uninstall) uninstall ;;
   restore)   restore ;;
