@@ -24,5 +24,5 @@ brew install \
   zsh-syntax-highlighting \
   zsh-autosuggestions \
   micro \
-  dtach \
+  abduco \
   aviator-co/tap/av \
