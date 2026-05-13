@@ -3,9 +3,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DOTFILES_ARGS="install"
-CONFIGS_ARGS="install"
-SCRIPTS_ARGS="install"
+DOTFILES_ARGS=(install)
+CONFIGS_ARGS=(install)
+SCRIPTS_ARGS=(install)
 NON_INTERACTIVE=false
 RUN_BREW=false
 RUN_DOTFILES=false
@@ -19,15 +19,15 @@ for arg in "$@"; do
     --dotfiles) RUN_DOTFILES=true ;;
     --scripts) RUN_SCRIPTS=true ;;
     --configs) RUN_CONFIGS=true ;;
-    --devbox) DEVBOX=true; DOTFILES_ARGS="$DOTFILES_ARGS --devbox" ;;
-    --no-backup) DOTFILES_ARGS="$DOTFILES_ARGS --no-backup"; CONFIGS_ARGS="$CONFIGS_ARGS --no-backup" ;;
-    --yes|-y) NON_INTERACTIVE=true; DOTFILES_ARGS="$DOTFILES_ARGS --yes"; CONFIGS_ARGS="$CONFIGS_ARGS --yes"; SCRIPTS_ARGS="$SCRIPTS_ARGS --yes" ;;
+    --devbox) DEVBOX=true; DOTFILES_ARGS+=(--devbox) ;;
+    --no-backup) DOTFILES_ARGS+=(--no-backup); CONFIGS_ARGS+=(--no-backup) ;;
+    --yes|-y) NON_INTERACTIVE=true; DOTFILES_ARGS+=(--yes); CONFIGS_ARGS+=(--yes); SCRIPTS_ARGS+=(--yes) ;;
     --help|-h)
       echo "Usage: install.sh [OPTIONS]"
       echo ""
       echo "Options:"
       echo "  --brew        Install Homebrew packages"
-      echo "  --dotfiles    Install dotfiles (zsh, git, claude)"
+      echo "  --dotfiles    Install dotfiles (zsh, git, claude, codex)"
       echo "  --scripts     Install scripts to ~/.local/bin"
       echo "  --configs     Install editor configs (VS Code, Cursor)"
       echo "  --devbox      Use devbox-specific dotfiles"
@@ -74,17 +74,17 @@ fi
 
 if [[ "$RUN_DOTFILES" == true ]]; then
   echo "==> Installing dotfiles..."
-  bash "$SCRIPT_DIR/scripts/dotfiles.sh" $DOTFILES_ARGS
+  bash "$SCRIPT_DIR/scripts/dotfiles.sh" "${DOTFILES_ARGS[@]}"
 fi
 
 if [[ "$RUN_SCRIPTS" == true ]]; then
   echo "==> Installing scripts..."
-  bash "$SCRIPT_DIR/scripts/scripts.sh" $SCRIPTS_ARGS
+  bash "$SCRIPT_DIR/scripts/scripts.sh" "${SCRIPTS_ARGS[@]}"
 fi
 
 if [[ "$RUN_CONFIGS" == true ]]; then
   echo "==> Installing editor configs..."
-  bash "$SCRIPT_DIR/scripts/configs.sh" $CONFIGS_ARGS
+  bash "$SCRIPT_DIR/scripts/configs.sh" "${CONFIGS_ARGS[@]}"
 fi
 
 echo "==> All done! Restart your shell or run: source ~/.zshrc"

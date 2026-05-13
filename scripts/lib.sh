@@ -12,8 +12,11 @@ backup() {
     return
   fi
   if [[ -e "$file" ]]; then
+    if [[ -z "${BACKUP_DIR:-}" ]]; then
+      init_backup
+    fi
     mkdir -p "$BACKUP_DIR"
-    local relative="${file#$HOME/}"
+    local relative="${file#"$HOME"/}"
     local backup_path="$BACKUP_DIR/$relative"
     mkdir -p "$(dirname "$backup_path")"
     cp -r "$file" "$backup_path"
@@ -44,14 +47,14 @@ safe_remove() {
 
 restore_from_backup() {
   local latest
-  latest=$(ls -dt "$BACKUP_BASE"/*/ 2>/dev/null | head -1)
+  latest=$(find "$BACKUP_BASE" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | sort -r | head -n 1)
   if [[ -z "$latest" ]]; then
     echo "No backups found in $BACKUP_BASE"
     exit 1
   fi
   echo "Restoring from $latest ..."
   while IFS= read -r file; do
-    local relative="${file#$latest}"
+    local relative="${file#"$latest"/}"
     local target="$HOME/$relative"
     mkdir -p "$(dirname "$target")"
     cp "$file" "$target"

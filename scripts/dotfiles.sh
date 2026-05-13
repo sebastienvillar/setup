@@ -7,6 +7,7 @@ DOTFILES_DIR="$SCRIPT_DIR/../dotfiles"
 BACKUP_BASE="$HOME/.dotfiles-backup"
 DEVBOX=false
 
+# shellcheck source=scripts/lib.sh
 source "$SCRIPT_DIR/lib.sh"
 
 install_zsh() {
@@ -64,6 +65,39 @@ install_claude() {
   done
 }
 
+install_codex() {
+  echo "Installing Codex settings..."
+  mkdir -p "$HOME/.codex" "$HOME/.codex/agents" "$HOME/.agents/skills"
+  if [[ "$DEVBOX" == true ]]; then
+    echo "Using devbox Codex settings..."
+    copy "$DOTFILES_DIR/codex/config-devbox.toml" "$HOME/.codex/config.toml"
+  else
+    copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
+  fi
+  for item in "$DOTFILES_DIR/codex"/*; do
+    local name
+    name="$(basename "$item")"
+    case "$name" in
+      config.toml|config-devbox.toml) continue ;;
+      agents)
+        for agent in "$item"/*; do
+          [[ -e "$agent" ]] || continue
+          copy "$agent" "$HOME/.codex/agents/$(basename "$agent")"
+        done
+        ;;
+      skills)
+        for skill in "$item"/*; do
+          [[ -e "$skill" ]] || continue
+          copy "$skill" "$HOME/.agents/skills/$(basename "$skill")"
+        done
+        ;;
+      *)
+        copy "$item" "$HOME/.codex/$name"
+        ;;
+    esac
+  done
+}
+
 uninstall() {
   echo "Removing dotfiles..."
   safe_remove "$HOME/.zshrc"
@@ -79,6 +113,30 @@ uninstall() {
     esac
     safe_remove "$HOME/.claude/$name"
   done
+
+  safe_remove "$HOME/.codex/config.toml"
+  for item in "$DOTFILES_DIR/codex"/*; do
+    local name
+    name="$(basename "$item")"
+    case "$name" in
+      config.toml|config-devbox.toml) continue ;;
+      agents)
+        for agent in "$item"/*; do
+          [[ -e "$agent" ]] || continue
+          safe_remove "$HOME/.codex/agents/$(basename "$agent")"
+        done
+        ;;
+      skills)
+        for skill in "$item"/*; do
+          [[ -e "$skill" ]] || continue
+          safe_remove "$HOME/.agents/skills/$(basename "$skill")"
+        done
+        ;;
+      *)
+        safe_remove "$HOME/.codex/$name"
+        ;;
+    esac
+  done
   echo "Done. Dotfiles removed."
 }
 
@@ -93,6 +151,7 @@ install_all() {
   install_git
   install_tmux
   install_claude
+  install_codex
 }
 
 show_help() {
@@ -104,12 +163,13 @@ show_help() {
   echo "  git         Install git config"
   echo "  tmux        Install tmux config"
   echo "  claude      Install Claude settings"
+  echo "  codex       Install Codex settings"
   echo "  uninstall   Remove installed dotfiles"
   echo "  restore     Restore files from latest backup"
   echo "  help        Show this help"
   echo ""
   echo "Flags:"
-  echo "  --devbox      Set Claude to bypass permissions mode"
+  echo "  --devbox      Set Claude and Codex to bypass permissions mode"
   echo "  --no-backup   Skip backing up existing files"
 }
 
@@ -128,6 +188,7 @@ case "$cmd" in
   git)       install_git ;;
   tmux)      install_tmux ;;
   claude)    install_claude ;;
+  codex)     install_codex ;;
   uninstall) uninstall ;;
   restore)   restore ;;
   help)      show_help ;;

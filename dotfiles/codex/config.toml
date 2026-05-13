@@ -1,0 +1,22 @@
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+personality = "pragmatic"
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+notify = ["bash", "-lc", "printf '\\a'"]
+
+[features]
+codex_hooks = true
+
+[marketplaces.aviator-plugins]
+source_type = "git"
+source = "https://github.com/aviator-co/agent-plugins.git"
+
+[plugins."av-cli@aviator-plugins"]
+enabled = true
+
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+CLAUDE_CODE_DISABLE_TERMINAL_TITLE = "1"
