@@ -25,6 +25,21 @@ install_zsh() {
     git clone https://github.com/zsh-users/zsh-syntax-highlighting "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
   fi
   copy "$DOTFILES_DIR/zsh/zshrc" "$HOME/.zshrc"
+
+  # Devbox-only: persist the absolute path to this setup repo so the
+  # `setup-update` alias can find it from any directory.
+  if [[ "$DEVBOX" == true ]]; then
+    local repo_dir
+    repo_dir="$(cd "$DOTFILES_DIR/.." && pwd)"
+    local zshrc_local="$HOME/.zshrc.local"
+    touch "$zshrc_local"
+    if grep -q '^export SETUP_REPO_DIR=' "$zshrc_local"; then
+      sed -i.bak "s|^export SETUP_REPO_DIR=.*|export SETUP_REPO_DIR=\"$repo_dir\"|" "$zshrc_local"
+      rm -f "$zshrc_local.bak"
+    else
+      printf 'export SETUP_REPO_DIR="%s"\n' "$repo_dir" >> "$zshrc_local"
+    fi
+  fi
 }
 
 install_git() {

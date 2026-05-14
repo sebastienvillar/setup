@@ -42,6 +42,13 @@ export TERMINAL_TITLE_SCRIPT="${TERMINAL_TITLE_SCRIPT:-$HOME/.local/bin/terminal
 _update_terminal_title() { [[ -x "$TERMINAL_TITLE_SCRIPT" ]] && "$TERMINAL_TITLE_SCRIPT"; }
 add-zsh-hook precmd _update_terminal_title
 
+# --- Aliases ---
+# Devbox-only: pull the setup repo and rerun every install step. SETUP_REPO_DIR
+# is set in ~/.zshrc.local by scripts/dotfiles.sh during `--devbox` installs.
+if [[ -n "${CODER_WORKSPACE_NAME:-}" ]]; then
+  alias setup-update='(cd "${SETUP_REPO_DIR:?SETUP_REPO_DIR not set — run install.sh --devbox from the setup repo}" && git pull --ff-only && ./install.sh --brew --dotfiles --scripts --configs --devbox --yes)'
+fi
+
 # --- Machine-specific overrides ---
 # Source local config if it exists (not tracked by git)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

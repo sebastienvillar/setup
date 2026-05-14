@@ -23,7 +23,7 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 
 - Devbox variant: `--devbox` selects `brew-devbox.sh`, `gitconfig-devbox`, and `settings-devbox.json` (Claude in bypass-permissions mode).
 - Backups: every file overwrite is backed up to `~/.dotfiles-backup/<timestamp>/` or `~/.configs-backup/<timestamp>/` unless `--no-backup` is passed. `restore.sh` reads from the latest timestamped directory.
-- Local overrides: `~/.gitconfig.local` is created (empty `[user] email`) on first install and is not tracked. `.zshrc.local` is gitignored for the same purpose.
+- Local overrides: `~/.gitconfig.local` is created (empty `[user] email`) on first install and is not tracked. `.zshrc.local` is gitignored for the same purpose; on `--devbox` installs, the dotfiles step writes `export SETUP_REPO_DIR=<absolute path>` into it so the `setup-update` zsh alias (defined only when `CODER_WORKSPACE_NAME` is set) can locate this repo.
 - Interactive by default: `copy` in `lib.sh` prompts before overwriting an existing non-symlink file. `--yes`/`-y` makes the run non-interactive.
 
 ## When editing
