@@ -6,7 +6,7 @@ approval_policy = "on-request"
 notify = ["bash", "-lc", "printf '\\a'"]
 
 [features]
-codex_hooks = true
+hooks = true
 
 [marketplaces.aviator-plugins]
 source_type = "git"

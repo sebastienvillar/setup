@@ -12,24 +12,14 @@ Name the file using this format: `yyyy-mm-dd-<description>`
 
 ---
 
-# Plan review
-
-After creating or significantly revising an implementation plan:
-1. Automatically call `/review-plan` with the full plan text.
-2. Incorporate the review feedback by updating the plan — fix critical issues and apply recommendations.
-3. Present the updated plan to the user.
-
----
-
 # Plan execution
 
 During implementation:
+- Implement the entire plan in one pull request.
 - Comments must not break encapsulation (i.e. comment on a function definition should not expose how the function is implemented but only it's goal)
-
-After implementing each step of a plan:
-1. Run the relevant verification tools for the code that was changed (e.g. tests, `tsc`, `eslint`, and other applicable tools for those changes).
-2. Fix any issues before moving on.
-3. Commit and create a stacked PR using `av` (one stacked PR per step).
+- After implementation, run the relevant verification tools for the code that was changed (e.g. tests, `tsc`, `eslint`, and other applicable tools for those changes)
+After implementing the entire plan in one
+- Once done, create a pull request
 
 ---
 

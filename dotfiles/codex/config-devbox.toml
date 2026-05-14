@@ -6,7 +6,7 @@ approval_policy = "never"
 notify = ["bash", "-lc", "$HOME/.local/bin/terminal-title waiting; printf '\\a'"]
 
 [features]
-codex_hooks = true
+hooks = true
 
 [marketplaces.aviator-plugins]
 source_type = "git"
