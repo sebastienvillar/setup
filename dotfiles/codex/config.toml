@@ -15,6 +15,57 @@ source = "https://github.com/aviator-co/agent-plugins.git"
 [plugins."av-cli@aviator-plugins"]
 enabled = true
 
+[plugins."figma-security-guidance@figma-internal"]
+enabled = true
+
+[plugins."figma-plugin-staging@figma-internal"]
+enabled = true
+
+[plugins."fix-a11y@figma-internal"]
+enabled = true
+
+[plugins."prodsec@figma-internal"]
+enabled = true
+
+[plugins."testing@figma-internal"]
+enabled = true
+
+[plugins."coder-tools@figma-internal"]
+enabled = true
+
+[plugins."update-dependency@figma-internal"]
+enabled = true
+
+[plugins."figma-plugin@figma-internal"]
+enabled = true
+
+[plugins."rust-analyzer-lsp@claude-plugins-official"]
+enabled = true
+
+[plugins."typescript-lsp@claude-plugins-official"]
+enabled = true
+
+[plugins."feature-flag-cleanup@figma-internal"]
+enabled = true
+
+[plugins."plugin-tools@figma-internal"]
+enabled = true
+
+[plugins."ci-tools@figma-internal"]
+enabled = true
+
+[plugins."figtag-triage@figma-internal"]
+enabled = true
+
+[plugins."fpl-practices@figma-internal"]
+enabled = true
+
+[plugins."assistant-tooling@figma-internal"]
+enabled = true
+
+[plugins."browser-testing@figma-internal"]
+enabled = true
+
 [shell_environment_policy]
 inherit = "core"
 

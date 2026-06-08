@@ -14,6 +14,23 @@
     }
   },
   "enabledPlugins": {
-    "av-cli@aviator-plugins": true
+    "av-cli@aviator-plugins": true,
+    "figma-security-guidance@figma-internal": true,
+    "figma-plugin-staging@figma-internal": true,
+    "fix-a11y@figma-internal": true,
+    "prodsec@figma-internal": true,
+    "testing@figma-internal": true,
+    "coder-tools@figma-internal": true,
+    "update-dependency@figma-internal": true,
+    "figma-plugin@figma-internal": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "feature-flag-cleanup@figma-internal": true,
+    "plugin-tools@figma-internal": true,
+    "ci-tools@figma-internal": true,
+    "figtag-triage@figma-internal": true,
+    "fpl-practices@figma-internal": true,
+    "assistant-tooling@figma-internal": true,
+    "browser-testing@figma-internal": true
   }
 }
