@@ -66,6 +66,12 @@ enabled = true
 [plugins."browser-testing@figma-internal"]
 enabled = true
 
+[projects."/home/ubuntu/figma/figma/.codex"]
+trust_level = "trusted"
+
+[projects."/home/ubuntu/.codex"]
+trust_level = "trusted"
+
 [shell_environment_policy]
 inherit = "core"
 
