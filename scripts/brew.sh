@@ -24,4 +24,7 @@ brew install \
   zsh-syntax-highlighting \
   zsh-autosuggestions \
   micro \
-  aviator-co/tap/av \
+  aviator-co/tap/av
+
+# Figma paste
+npx --yes github:figma/paste#v0.1.6 setup --no-login

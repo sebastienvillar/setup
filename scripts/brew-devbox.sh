@@ -16,4 +16,7 @@ fi
 
 brew install \
   tmux \
-  aviator-co/tap/av \
+  aviator-co/tap/av
+
+# Figma paste
+npx --yes github:figma/paste#v0.1.6 setup --no-login

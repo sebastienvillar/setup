@@ -10,7 +10,7 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 ## Layout
 
 - `scripts/` — installer logic. Each top-level step has its own script:
-  - `brew.sh` / `brew-devbox.sh` — Homebrew packages (laptop vs devbox).
+  - `brew.sh` / `brew-devbox.sh` — Homebrew packages (laptop vs devbox), plus the `figma/paste` setup.
   - `dotfiles.sh` — installs `~/.zshrc`, `~/.gitconfig`, `~/.tmux.conf`, and `~/.claude/*` from `dotfiles/`.
   - `configs.sh` — installs Cursor and VS Code `settings.json` and `keybindings.json` (paths differ on macOS vs Linux).
   - `scripts.sh` — copies helper scripts into `~/.local/bin/` (currently `terminal-title`).
