@@ -37,3 +37,21 @@ After implementing the entire plan in one
 - PR title naming:
   - Single PR: `<short-description>`
   - Stacked PRs: `<project-name> [partX] <short-description>`. When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers.
+
+---
+
+# Commits and push
+
+Always bypass Figma’s expensive HK hooks while retaining other Git safeguards.
+
+- For all commits, including `av commit` and `git commit`, prefix the command with `NO_FIGMA_COMMIT_HOOK=1`.
+- For all pushes, prefix the command with `NO_FIGMA_PRE_PUSH_HOOK=1`.
+- Do not set `HK_PROFILE=slow`.
+- Do not use `--no-verify` unless explicitly requested.
+
+Examples:
+
+```sh
+NO_FIGMA_COMMIT_HOOK=1 av commit -a -m "..."
+NO_FIGMA_COMMIT_HOOK=1 git commit -m "..."
+NO_FIGMA_PRE_PUSH_HOOK=1 git push
