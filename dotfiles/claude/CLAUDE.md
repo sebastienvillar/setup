@@ -33,7 +33,15 @@ After implementing the entire plan in one
 
 # Pull requests
 
-- PR descriptions should only describe the intent of the changes, not summarize code changes or include code pointers. Reviewers can see the changed files themselves.
+- PR descriptions should follow this format:
+```
+# Goal
+<Describe the product goal of the feature if there's one or goal of the change>
+
+# Description
+<Describe the high level changes - it should explain what concepts/systems/boundaries needed to changed/be added and how it changed the overall system. If appropriate, describe a before and after>
+```
+
 - PR title naming:
   - Single PR: `<short-description>`
   - Stacked PRs: `<project-name> [partX] <short-description>`. When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers.
