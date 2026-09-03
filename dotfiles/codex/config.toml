@@ -5,6 +5,7 @@ notify = ["bash", "-lc", "printf '\\a'"]
 
 [features]
 hooks = true
+multi_agent = true
 
 [marketplaces.aviator-plugins]
 source_type = "git"

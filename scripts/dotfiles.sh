@@ -82,7 +82,7 @@ install_claude() {
 
 install_codex() {
   echo "Installing Codex settings..."
-  mkdir -p "$HOME/.codex" "$HOME/.codex/agents" "$HOME/.agents/skills"
+  mkdir -p "$HOME/.codex" "$HOME/.codex/agents" "$HOME/.codex/prompts" "$HOME/.agents/skills"
   if [[ "$DEVBOX" == true ]]; then
     echo "Using devbox Codex settings..."
     copy "$DOTFILES_DIR/codex/config-devbox.toml" "$HOME/.codex/config.toml"
@@ -104,6 +104,12 @@ install_codex() {
         for skill in "$item"/*; do
           [[ -e "$skill" ]] || continue
           copy "$skill" "$HOME/.agents/skills/$(basename "$skill")"
+        done
+        ;;
+      prompts)
+        for prompt in "$item"/*; do
+          [[ -e "$prompt" ]] || continue
+          copy "$prompt" "$HOME/.codex/prompts/$(basename "$prompt")"
         done
         ;;
       *)
@@ -145,6 +151,12 @@ uninstall() {
         for skill in "$item"/*; do
           [[ -e "$skill" ]] || continue
           safe_remove "$HOME/.agents/skills/$(basename "$skill")"
+        done
+        ;;
+      prompts)
+        for prompt in "$item"/*; do
+          [[ -e "$prompt" ]] || continue
+          safe_remove "$HOME/.codex/prompts/$(basename "$prompt")"
         done
         ;;
       *)
