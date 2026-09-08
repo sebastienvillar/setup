@@ -35,6 +35,8 @@ After implementing the entire plan in one
 
 - PR descriptions should follow this format:
 ```
+_Written with AI_
+
 # Goal
 <Describe the product goal of the feature if there's one or goal of the change>
 
