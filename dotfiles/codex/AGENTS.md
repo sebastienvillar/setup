@@ -41,7 +41,7 @@ _Written with AI_
 <Describe the product goal of the feature if there's one or goal of the change>
 
 # Description
-<Describe the high level changes - it should explain what concepts/systems/boundaries needed to changed/be added and how it changed the overall system. If appropriate, describe a before and after>
+<Describe the high level changes - it should explain what concepts/systems/boundaries needed to changed/be added and how it changed the overall system. If appropriate, describe a before and after. Be concise>
 ```
 
 - PR title naming:
