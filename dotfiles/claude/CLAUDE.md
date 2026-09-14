@@ -8,7 +8,6 @@ When creating implementation plans (including in plan mode), always add an "Inte
 
 During implementation:
 - Implement the entire plan in one pull request.
-- Comments must not break encapsulation (i.e. comment on a function definition should not expose how the function is implemented but only it's goal)
 - After implementation, run the relevant verification tools for the code that was changed (e.g. tests, `tsc`, `eslint`, and other applicable tools for those changes)
 After implementing the entire plan in one
 - Once done, create a pull request
@@ -18,7 +17,7 @@ After implementing the entire plan in one
 # Coding preferences
 
 - When coding in typescript, export the main function/component as default.
-- Add a concise comment above every function you create that is not trivial that describe what it does. Do not describe where the function is used from. This breaks encapsulation and these comments become stale as the code evolves.
+- Add a concise comment above every function and block of code you create that is not trivial that describes what it does. It should allow quickly reading files and functions without needing to read the actual code specifics. Do not describe where the function is used from. This breaks encapsulation and these comments become stale as the code evolves.
 
 ---
 
@@ -41,7 +40,7 @@ _Written with AI_
 <Describe the product goal of the feature if there's one or goal of the change>
 
 # Description
-<Describe the high level changes - it should explain what concepts/systems/boundaries needed to changed/be added and how it changed the overall system. If appropriate, describe a before and after>
+<Describe the high level changes - it should explain what concepts/systems/boundaries needed to changed/be added and how it changed the overall system. If appropriate, describe a before and after. Be concise>
 ```
 
 - PR title naming:
