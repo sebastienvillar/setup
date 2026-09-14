@@ -18,7 +18,7 @@ After implementing the entire plan in one
 # Coding preferences
 
 - When coding in typescript, export the main function/component as default.
-- Do not add comments describing where a function/property is used from. This breaks encapsulation and these comments become stale as the code evolves.
+- Add a concise comment above every function you create that is not trivial that describe what it does. Do not describe where the function is used from. This breaks encapsulation and these comments become stale as the code evolves.
 
 ---
 
