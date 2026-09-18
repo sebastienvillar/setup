@@ -25,8 +25,10 @@ After implementing the entire plan in one
 
 - Use aviator CLI (av) to create stacked branches/pull requests.
 - Branch naming:
-  - Single branch: `seb/<short-description>`
-  - Stacked branches: `seb/<project-name>-<partX>-<short-description>`
+  - Single branch: `seb/<linear-id>-<short-description>` // i.e. `seb/FIG-123-add-button-provision-sandbox`, `seb/add-button-provision-sandbox`
+  - Stacked branches: `seb/<project-name>-<linear-id-partX>-<short-description>`  // i.e. `seb/provisioning-FIG-123-part1-add-button-provision-sandbox`, `seb/provisioning-part1-add-button-provision-sandbox`
+
+Where <linear-id> is the id of the linear ticket that was referenced in the conversation. Do not try to find a ticket id on your own. If no ticket was referenced in the conversation, do not add one
 
 ---
 
@@ -44,8 +46,10 @@ _Written with AI_
 ```
 
 - PR title naming:
-  - Single PR: `<short-description>`
-  - Stacked PRs: `<project-name> [partX] <short-description>`. When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers.
+  - Single PR: `<[linear-id]><short-description>` // i.e. `[FIG-123] Add button to provision sandbox`, `Add button to provision sandbox`
+  - Stacked PRs: `<project-name> [<linear-id> - Part X] <short-description>`. When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers. // i.e. `Provisioning [FIG-123 - Part 1] Add button to provision sandbox`, `Provisioning [Part 1] Add button to provision sandbox`
+
+Where <linear-id> is the id of the linear ticket that was referenced in the conversation. Do not try to find a ticket id on your own. If no ticket was referenced in the conversation, do not add one
 
 ---
 
