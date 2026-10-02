@@ -16,7 +16,7 @@ After implementing the entire plan in one
 
 # Coding preferences
 
-- When coding in typescript, export the main function/component as default.
+- When coding in typescript, export the main function/component as default. Do it only for new files. Do not change export for existing files
 - Add a concise comment above every function and block of code you create that is not trivial that describes what it does. It should allow quickly reading files and functions without needing to read the actual code specifics. Do not describe where the function is used from. This breaks encapsulation and these comments become stale as the code evolves.
 
 ---
