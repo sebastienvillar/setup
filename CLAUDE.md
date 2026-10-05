@@ -11,19 +11,19 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 
 - `scripts/` — installer logic. Each top-level step has its own script:
   - `brew.sh` / `brew-devbox.sh` — Homebrew packages (laptop vs devbox), plus the `figma/paste` setup.
-  - `dotfiles.sh` — installs `~/.zshrc`, `~/.gitconfig`, `~/.tmux.conf`, and `~/.claude/*` from `dotfiles/`.
+  - `dotfiles.sh` — installs `~/.zshrc`, `~/.tmux.conf`, and `~/.claude/*` from `dotfiles/`.
   - `configs.sh` — installs Cursor and VS Code `settings.json` and `keybindings.json` (paths differ on macOS vs Linux).
   - `scripts.sh` — copies helper scripts into `~/.local/bin/` (currently `terminal-title`).
   - `lib.sh` — shared helpers: `copy`, `backup`, `safe_remove`, `restore_from_backup`, `init_backup`.
   - `terminal-title.sh` — the helper script itself, not part of installer logic.
-- `dotfiles/` — source files copied into `$HOME`. `claude/` holds Claude Code settings (separate `settings.json` and `settings-devbox.json`) plus `CLAUDE.md` and `skills/`. `git/` has separate `gitconfig` and `gitconfig-devbox`.
+- `dotfiles/` — source files copied into `$HOME`. `claude/` holds Claude Code settings (separate `settings.json` and `settings-devbox.json`) plus `CLAUDE.md` and `skills/`.
 - `configs/` — editor settings for `cursor/` and `vscode/`.
 
 ## Conventions
 
-- Devbox variant: `--devbox` selects `brew-devbox.sh`, `gitconfig-devbox`, and `settings-devbox.json` (Claude in bypass-permissions mode).
+- Devbox variant: `--devbox` selects `brew-devbox.sh` and `settings-devbox.json` (Claude in bypass-permissions mode).
 - Backups: every file overwrite is backed up to `~/.dotfiles-backup/<timestamp>/` or `~/.configs-backup/<timestamp>/` unless `--no-backup` is passed. `restore.sh` reads from the latest timestamped directory.
-- Local overrides: `~/.gitconfig.local` is created (empty `[user] email`) on first install and is not tracked. `.zshrc.local` is gitignored for the same purpose; on `--devbox` installs, the dotfiles step writes `export SETUP_REPO_DIR=<absolute path>` into it so the `setup-update` zsh alias (defined only when `CODER_WORKSPACE_NAME` is set) can locate this repo.
+- Local overrides: `.zshrc.local` is gitignored and not tracked; on `--devbox` installs, the dotfiles step writes `export SETUP_REPO_DIR=<absolute path>` into it so the `setup-update` zsh alias (defined only when `CODER_WORKSPACE_NAME` is set) can locate this repo.
 - Interactive by default: `copy` in `lib.sh` prompts before overwriting an existing non-symlink file. `--yes`/`-y` makes the run non-interactive.
 
 ## When editing

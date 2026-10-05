@@ -27,7 +27,7 @@ for arg in "$@"; do
       echo ""
       echo "Options:"
       echo "  --brew        Install Homebrew packages"
-      echo "  --dotfiles    Install dotfiles (zsh, git, claude, codex)"
+      echo "  --dotfiles    Install dotfiles (zsh, claude, codex)"
       echo "  --scripts     Install scripts to ~/.local/bin"
       echo "  --configs     Install editor configs (VS Code, Cursor)"
       echo "  --devbox      Use devbox-specific dotfiles"

@@ -42,20 +42,6 @@ install_zsh() {
   fi
 }
 
-install_git() {
-  echo "Installing git config..."
-  if [[ "$DEVBOX" == true ]]; then
-    copy "$DOTFILES_DIR/git/gitconfig-devbox" "$HOME/.gitconfig"
-  else
-    copy "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
-  fi
-
-  if [[ ! -f "$HOME/.gitconfig.local" ]]; then
-    printf '[user]\n\temail = \n' > "$HOME/.gitconfig.local"
-    echo "Created ~/.gitconfig.local — set your email there."
-  fi
-}
-
 install_tmux() {
   echo "Installing tmux config..."
   copy "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
@@ -122,7 +108,6 @@ install_codex() {
 uninstall() {
   echo "Removing dotfiles..."
   safe_remove "$HOME/.zshrc"
-  safe_remove "$HOME/.gitconfig"
   safe_remove "$HOME/.tmux.conf"
 
   safe_remove "$HOME/.claude/settings.json"
@@ -175,7 +160,6 @@ restore() {
 install_all() {
   init_backup
   install_zsh
-  install_git
   install_tmux
   install_claude
   install_codex
@@ -187,7 +171,6 @@ show_help() {
   echo "Commands:"
   echo "  install     Install all dotfiles (default)"
   echo "  zsh         Install zsh config"
-  echo "  git         Install git config"
   echo "  tmux        Install tmux config"
   echo "  claude      Install Claude settings"
   echo "  codex       Install Codex settings"
@@ -212,7 +195,6 @@ cmd="${1:-install}"
 case "$cmd" in
   install)   install_all ;;
   zsh)       install_zsh ;;
-  git)       install_git ;;
   tmux)      install_tmux ;;
   claude)    install_claude ;;
   codex)     install_codex ;;
