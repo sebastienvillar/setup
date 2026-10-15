@@ -25,7 +25,7 @@ After implementing the entire plan in one
 # Git workflows
 
 - Keep code moves in separate commits from functional changes so each is easy to review.
-- Use aviator CLI (av) to create stacked branches/pull requests.
+- Use `gh stack` to create and manage stacked branches/pull requests.
 - Branch naming:
   - Single branch: `seb/<linear-id>-<short-description>` // i.e. `seb/FIG-123-add-button-provision-sandbox`, `seb/add-button-provision-sandbox`
   - Stacked branches: `seb/<project-name>-<linear-id-partX>-<short-description>`  // i.e. `seb/provisioning-FIG-123-part1-add-button-provision-sandbox`, `seb/provisioning-part1-add-button-provision-sandbox`
@@ -59,7 +59,7 @@ Where <linear-id> is the id of the linear ticket that was referenced in the conv
 
 Always bypass Figma’s expensive HK hooks while retaining other Git safeguards.
 
-- For all commits, including `av commit` and `git commit`, prefix the command with `NO_FIGMA_COMMIT_HOOK=1`.
+- For all commits, including `git commit`, prefix the command with `NO_FIGMA_COMMIT_HOOK=1`.
 - For all pushes, prefix the command with `NO_FIGMA_PRE_PUSH_HOOK=1`.
 - Do not set `HK_PROFILE=slow`.
 - Do not use `--no-verify` unless explicitly requested.
@@ -67,6 +67,5 @@ Always bypass Figma’s expensive HK hooks while retaining other Git safeguards.
 Examples:
 
 ```sh
-NO_FIGMA_COMMIT_HOOK=1 av commit -a -m "..."
 NO_FIGMA_COMMIT_HOOK=1 git commit -m "..."
 NO_FIGMA_PRE_PUSH_HOOK=1 git push
