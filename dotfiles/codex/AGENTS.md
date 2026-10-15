@@ -16,6 +16,7 @@ After implementing the entire plan in one
 
 # Coding preferences
 
+- Reuse or modify existing utilities when applicable instead of reimplementing their functionality.
 - When coding in typescript, export the main function/component as default. Do it only for new files. Do not change export for existing files
 - Add a concise comment above every function and block of code you create that is not trivial that describes what it does. It should allow quickly reading files and functions without needing to read the actual code specifics. Do not describe where the function is used from. This breaks encapsulation and these comments become stale as the code evolves.
 
@@ -23,6 +24,7 @@ After implementing the entire plan in one
 
 # Git workflows
 
+- Keep code moves in separate commits from functional changes so each is easy to review.
 - Use aviator CLI (av) to create stacked branches/pull requests.
 - Branch naming:
   - Single branch: `seb/<linear-id>-<short-description>` // i.e. `seb/FIG-123-add-button-provision-sandbox`, `seb/add-button-provision-sandbox`
@@ -36,7 +38,7 @@ Where <linear-id> is the id of the linear ticket that was referenced in the conv
 
 - PR descriptions should follow this format:
 ```
-_Written with AI_
+_Written with AI, edited by @sebastienvillar-figma_
 
 # Goal
 <Describe the product goal of the feature if there's one or goal of the change>
