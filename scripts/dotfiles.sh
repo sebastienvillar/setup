@@ -105,6 +105,15 @@ install_codex() {
   done
 }
 
+install_pi() {
+  echo "Installing Pi prompts..."
+  mkdir -p "$HOME/.pi/agent/prompts"
+  for prompt in "$DOTFILES_DIR/pi/prompts"/*; do
+    [[ -e "$prompt" ]] || continue
+    copy "$prompt" "$HOME/.pi/agent/prompts/$(basename "$prompt")"
+  done
+}
+
 uninstall() {
   echo "Removing dotfiles..."
   safe_remove "$HOME/.zshrc"
@@ -149,6 +158,11 @@ uninstall() {
         ;;
     esac
   done
+
+  for prompt in "$DOTFILES_DIR/pi/prompts"/*; do
+    [[ -e "$prompt" ]] || continue
+    safe_remove "$HOME/.pi/agent/prompts/$(basename "$prompt")"
+  done
   echo "Done. Dotfiles removed."
 }
 
@@ -163,6 +177,7 @@ install_all() {
   install_tmux
   install_claude
   install_codex
+  install_pi
 }
 
 show_help() {
@@ -174,6 +189,7 @@ show_help() {
   echo "  tmux        Install tmux config"
   echo "  claude      Install Claude settings"
   echo "  codex       Install Codex settings"
+  echo "  pi          Install Pi prompts"
   echo "  uninstall   Remove installed dotfiles"
   echo "  restore     Restore files from latest backup"
   echo "  help        Show this help"
@@ -198,6 +214,7 @@ case "$cmd" in
   tmux)      install_tmux ;;
   claude)    install_claude ;;
   codex)     install_codex ;;
+  pi)        install_pi ;;
   uninstall) uninstall ;;
   restore)   restore ;;
   help)      show_help ;;
