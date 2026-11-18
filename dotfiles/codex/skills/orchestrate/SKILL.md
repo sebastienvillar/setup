@@ -41,7 +41,7 @@ Refresh each PR with `gh` before you write the update. Group PRs by what I need 
 4. **Parked, ignore for now**: one bullet per ticket or PR, with what blocks it and what to do once it unblocks.
 5. **If you only do three things:** a numbered list of the three most important actions for me, or fewer if there are fewer.
 
-Link every PR as a markdown link labeled with its number, e.g. `[#1068320](https://github.com/figma/figma/pull/1068320)`. Never print a bare PR URL. Write a stack bottom-up on one line, joined with `→`. Keep table cells to a short phrase.
+Link every PR and Linear ticket as a markdown link labeled with its ID, e.g. `[#1068320](https://github.com/figma/figma/pull/1068320)` and `[FIG-4804](https://linear.app/figma/issue/FIG-4804)`. Never print a bare URL. Write a stack bottom-up on one line, joined with `→`. Keep table cells to a short phrase.
 
 # Getting my attention
 
