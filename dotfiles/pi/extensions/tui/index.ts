@@ -5,6 +5,7 @@ import { terminalRows } from "../shared/terminal";
 import { registerExtensionEntryRenderer } from "../shared/tui";
 import { ensureConfigExists, loadConfig, type PolishedTuiConfig, saveConfig } from "./config";
 import { costLabel, costReport, formatCost, getSessionCosts } from "./cost";
+import { showCostHistory } from "./cost-history";
 import { installFocusCursor } from "./cursor-focus";
 import {
 	advanceWorkingAnimation,
@@ -26,7 +27,13 @@ import {
 } from "./footer";
 import { readGitStatus } from "./git";
 import { readRuntimeInfo } from "./runtime";
-import { renderTurnDurationEntry, TURN_DURATION_ENTRY_TYPE, TurnDurationTimer } from "./turn-duration";
+import {
+	isTurnDurationEntry,
+	latestTurnEndedAt,
+	renderTurnDurationEntry,
+	TURN_DURATION_ENTRY_TYPE,
+	TurnDurationTimer,
+} from "./turn-duration";
 import { detectUsageProvider, fetchUsageForProvider, USAGE_REFRESH_INTERVAL, type UsageSnapshot } from "./usage";
 
 type UsageBarCache = {
@@ -143,6 +150,7 @@ export default function (pi: ExtensionAPI) {
 	let editorSessionIdentity: EditorSessionIdentity | undefined;
 	let mainAutoSelected = false;
 	const turnDurationTimer = new TurnDurationTimer();
+	let lastTurnEndedAt: number | undefined;
 
 	const isStaleCtxError = (error: unknown) =>
 		(error instanceof Error ? error.message : String(error)).includes("ctx is stale");
@@ -525,6 +533,18 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
+	pi.registerCommand("costs", {
+		description: "Show cost per session for today and the past 7 days (also Cmd+O)",
+		handler: async (_args, ctx) => showCostHistory(ctx),
+	});
+	// Ghostty maps Cmd+O to alt+o, since tmux drops the super modifier; super+o covers sessions outside tmux.
+	for (const shortcut of ["alt+o", "super+o"] as const) {
+		pi.registerShortcut(shortcut, {
+			description: "Show cost per session for today and the past 7 days",
+			handler: async (ctx) => showCostHistory(ctx),
+		});
+	}
+
 	pi.registerCommand("usage-bars", {
 		description: "Show or hide provider usage bars in the editor status row",
 		getArgumentCompletions: (prefix: string) =>
@@ -565,7 +585,9 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	registerExtensionEntryRenderer(pi, TURN_DURATION_ENTRY_TYPE, (entry, _options, theme) =>
-		renderTurnDurationEntry(entry.data, theme),
+		renderTurnDurationEntry(entry.data, theme, () =>
+			isTurnDurationEntry(entry.data) && entry.data.endedAt === lastTurnEndedAt ? lastTurnEndedAt : undefined,
+		),
 	);
 
 	pi.on("session_start", async (_event, ctx) => {
@@ -573,6 +595,7 @@ export default function (pi: ExtensionAPI) {
 		if (!ctx.hasUI) return;
 		disposed = false;
 		uiGeneration++;
+		lastTurnEndedAt = latestTurnEndedAt(ctx.sessionManager.getBranch());
 		installUi(ctx);
 		if (costTimer) clearInterval(costTimer);
 		// Children can keep working while the parent is idle. Poll only accounting,
@@ -599,6 +622,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("session_tree", async (_event, ctx) => {
+		lastTurnEndedAt = latestTurnEndedAt(ctx.sessionManager.getBranch());
 		if (syncStateIfCurrent(ctx)) refresh();
 	});
 
@@ -620,6 +644,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("agent_start", async (_event, ctx) => {
+		lastTurnEndedAt = undefined;
 		if (!syncStateIfCurrent(ctx)) return;
 		turnDurationTimer.start();
 		startWorkingAnimation();
@@ -628,6 +653,7 @@ export default function (pi: ExtensionAPI) {
 	pi.on("agent_end", async (_event, ctx) => {
 		const turnDuration = turnDurationTimer.finish();
 		if (turnDuration) pi.appendEntry(TURN_DURATION_ENTRY_TYPE, turnDuration);
+		lastTurnEndedAt = turnDuration?.endedAt;
 		if (!syncStateIfCurrent(ctx)) return;
 		setWorkingAnimationState(false, 0);
 		stopWorkingAnimation();

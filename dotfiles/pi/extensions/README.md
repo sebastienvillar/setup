@@ -12,7 +12,7 @@ Pi auto-discovers each `*/index.ts` in `~/.pi/agent/extensions/`:
 - `async-questions/`: `request_user_input_async` and `/questions`
 - `session-timers/`: `session_timer` tool and `/timers`
 - `convergence-loop/`: `/loop` and `/goal`
-- `tui/`: footer and editor chrome, `/cost`, `/usage-bars` (reads `~/.pi/agent/tui.json`)
+- `tui/`: footer and editor chrome, `/cost`, `/usage-bars` (reads `~/.pi/agent/tui.json`), the `took 12s` / `received 1 min ago` line under each finished turn, and `/costs` (`Cmd+O` via Ghostty's `alt+o` mapping) for cost per session today and over the past 7 days
 
 Local additions, not from jfmyers9/agent:
 

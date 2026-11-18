@@ -1,4 +1,4 @@
-import { Text } from "@earendil-works/pi-tui";
+import type { Component } from "@earendil-works/pi-tui";
 
 export const TURN_DURATION_ENTRY_TYPE = "tui-turn-duration";
 
@@ -65,7 +65,52 @@ export function formatTurnDuration(durationMs: number): string {
 	return parts.join(" ");
 }
 
-export function renderTurnDurationEntry(data: unknown, theme: ThemeLike): Text {
+const AGE_UNITS = [
+	["day", 86_400],
+	["hour", 3_600],
+	["min", 60],
+] as const;
+
+export function formatReceivedAge(elapsedMs: number): string {
+	const seconds = Math.max(0, Math.floor(elapsedMs / 1000));
+	for (const [unit, size] of AGE_UNITS) {
+		const count = Math.floor(seconds / size);
+		if (count) return `received ${count} ${unit}${count === 1 || unit === "min" ? "" : "s"} ago`;
+	}
+	return "received just now";
+}
+
+/** The newest turn's settle time, unless a user message has started another turn since. */
+export function latestTurnEndedAt(branch: readonly SessionEntryLike[]): number | undefined {
+	for (let index = branch.length - 1; index >= 0; index--) {
+		const entry = branch[index]!;
+		if (entry.type === "message" && entry.message?.role === "user") return undefined;
+		if (entry.type === "custom" && entry.customType === TURN_DURATION_ENTRY_TYPE && isTurnDurationEntry(entry.data))
+			return entry.data.endedAt;
+	}
+	return undefined;
+}
+
+type SessionEntryLike = {
+	type: string;
+	customType?: string;
+	data?: unknown;
+	message?: { role: string };
+};
+
+/** `receivedAt` is read on every frame so the age line ticks and disappears without re-creating the entry. */
+export function renderTurnDurationEntry(
+	data: unknown,
+	theme: ThemeLike,
+	receivedAt: () => number | undefined,
+): Component {
 	const duration = isTurnDurationEntry(data) ? formatTurnDuration(data.durationMs) : "unknown";
-	return new Text(`${theme.fg("dim", "took")} ${theme.fg("muted", duration)}`, 0, 0);
+	const took = `${theme.fg("dim", "took")} ${theme.fg("muted", duration)}`;
+	return {
+		render() {
+			const at = receivedAt();
+			return at === undefined ? [took] : [took, theme.fg("dim", formatReceivedAge(Date.now() - at))];
+		},
+		invalidate() {},
+	};
 }
