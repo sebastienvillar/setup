@@ -33,6 +33,7 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 - New Pi prompt (a `/name` command in Pi) → add it to `dotfiles/pi/prompts/`; `scripts/dotfiles.sh` installs it into `~/.pi/agent/prompts/`.
 - New Pi extension → add a directory with `index.ts` to `dotfiles/pi/extensions/`; Pi auto-discovers it in `~/.pi/agent/extensions/`. Add npm imports to `dotfiles/pi/package.json` and rerun `npm install --package-lock-only` there. Do not add `@earendil-works/*` or `typebox`; Pi supplies them.
 - New Pi rule → add it to `dotfiles/pi/rules/` and list it in `dotfiles/pi/AGENTS.md`.
+- Rule shared by Pi, Claude, and Codex → add it to `dotfiles/shared/`. `scripts/dotfiles.sh` installs it for Pi (`rules/`), Claude (`~/.claude/`), and Codex (appended to `~/.codex/AGENTS.md`). List it in `dotfiles/pi/AGENTS.md` and add an `@~/.claude/<rule>.md` import to `dotfiles/claude/CLAUDE.md`.
 - New editor → mirror the cursor/vscode pattern in `scripts/configs.sh`.
 - New helper script for `~/.local/bin` → add to `scripts/scripts.sh`.
 - Devbox-specific behavior → branch on `$DEVBOX` and add a `*-devbox` source file.

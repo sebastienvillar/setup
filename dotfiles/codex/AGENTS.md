@@ -36,17 +36,7 @@ Where <linear-id> is the id of the linear ticket that was referenced in the conv
 
 # Pull requests
 
-- PR descriptions should follow this format:
-```
-_Written with AI, edited by @sebastienvillar-figma_
-
-# Goal
-<Describe the product goal of the feature if there's one or goal of the change>
-
-# Description
-<Describe the high level changes - it should explain what concepts/systems/boundaries needed to changed/be added and how it changed the overall system. If appropriate, describe a before and after. Be concise>
-```
-
+- PR descriptions: follow "Explaining a PR" in the Communication section below.
 - PR title naming:
   - Single PR: `<[linear-id]><short-description>` // i.e. `[FIG-123] Add button to provision sandbox`, `Add button to provision sandbox`
   - Stacked PRs: `<project-name> [<linear-id> - Part X] <short-description>`. When creating a new part, update the titles of previous PRs in the stack to ensure they all have the correct part numbers. // i.e. `Provisioning [FIG-123 - Part 1] Add button to provision sandbox`, `Provisioning [Part 1] Add button to provision sandbox`

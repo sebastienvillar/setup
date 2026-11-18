@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTFILES_DIR="$SCRIPT_DIR/../dotfiles"
 BACKUP_BASE="$HOME/.dotfiles-backup"
 DEVBOX=false
+# Rules shared by Pi, Claude, and Codex.
+SHARED_RULES_DIR="$DOTFILES_DIR/shared"
 
 # shellcheck source=scripts/lib.sh
 source "$SCRIPT_DIR/lib.sh"
@@ -64,6 +66,10 @@ install_claude() {
     esac
     copy "$item" "$HOME/.claude/$name"
   done
+  # CLAUDE.md imports each shared rule with @~/.claude/<rule>.md.
+  for rule in "$SHARED_RULES_DIR"/*.md; do
+    copy "$rule" "$HOME/.claude/$(basename "$rule")"
+  done
 }
 
 install_codex() {
@@ -80,6 +86,20 @@ install_codex() {
     name="$(basename "$item")"
     case "$name" in
       config.toml|config-devbox.toml) continue ;;
+      AGENTS.md)
+        # Codex cannot import files, so append the shared rules to AGENTS.md.
+        local agents_md rule
+        agents_md="$(mktemp)"
+        {
+          cat "$item"
+          for rule in "$SHARED_RULES_DIR"/*.md; do
+            printf '\n---\n\n'
+            cat "$rule"
+          done
+        } > "$agents_md"
+        copy "$agents_md" "$HOME/.codex/AGENTS.md"
+        rm -f "$agents_md"
+        ;;
       agents)
         for agent in "$item"/*; do
           [[ -e "$agent" ]] || continue
@@ -122,6 +142,9 @@ install_pi() {
   for name in "${PI_AGENT_FILES[@]}"; do
     copy "$DOTFILES_DIR/pi/$name" "$PI_AGENT_DIR/$name"
   done
+  for rule in "$SHARED_RULES_DIR"/*.md; do
+    copy "$rule" "$PI_AGENT_DIR/rules/$(basename "$rule")"
+  done
 
   # session-timers/ registers the same session_timer tool as this older single-file extension.
   if [[ -e "$PI_AGENT_DIR/extensions/session-timer.ts" ]]; then
@@ -160,6 +183,9 @@ uninstall() {
       settings.json|settings-devbox.json) continue ;;
     esac
     safe_remove "$HOME/.claude/$name"
+  done
+  for rule in "$SHARED_RULES_DIR"/*.md; do
+    safe_remove "$HOME/.claude/$(basename "$rule")"
   done
 
   safe_remove "$HOME/.codex/config.toml"

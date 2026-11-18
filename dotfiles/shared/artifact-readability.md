@@ -6,11 +6,14 @@
   source inspection, executed results, and inference; make gaps explicit.
 - Record a commit, dirty state, observation time, or external snapshot when
   freshness matters. Say what a future reader should revalidate.
-- Use headings and tables only where they help. Omit empty sections, raw logs,
-  repeated metadata, and procedural history that does not explain a decision.
-- Add a small Mermaid diagram only when it explains a relationship or flow
-  more clearly than prose. Support its claims with the same evidence as text;
-  include a code trace only when readers need one.
+- Omit empty sections, raw logs, repeated metadata, and procedural history
+  that does not explain a decision.
+- Use diagrams and tables to make data and flows easy to see. Good fits:
+  - A Mermaid diagram for a flow, a sequence, or how components connect.
+  - A table to compare options, list values, or show before/after.
+  Skip them when the content is a single fact or a short list. Back up a
+  diagram's claims the same way as text. Include a code trace only when
+  readers need one.
 - A documented investigation may remain inconclusive. State confidence and
   the next useful observation instead of presenting guesses as facts.
 
