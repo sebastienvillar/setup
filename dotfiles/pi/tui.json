@@ -1,0 +1,34 @@
+{
+  "icons": {
+    "cwd": "󰝰",
+    "git": "",
+    "ahead": "↑",
+    "behind": "↓",
+    "diverged": "⇕",
+    "conflicted": "=",
+    "untracked": "?",
+    "stashed": "$",
+    "modified": "!",
+    "staged": "+",
+    "renamed": "»",
+    "deleted": "✘",
+    "typechanged": "T"
+  },
+  "colors": {
+    "cwdText": "syntaxOperator",
+    "git": "syntaxKeyword",
+    "gitStatus": "error",
+    "contextNormal": "muted",
+    "contextWarning": "warning",
+    "contextError": "error",
+    "tokens": "muted",
+    "cost": "success",
+    "separator": "borderMuted"
+  },
+  "compact": {
+    "minTerminalRows": 28
+  },
+  "usageBars": {
+    "visible": true
+  }
+}

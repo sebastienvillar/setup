@@ -1,0 +1,684 @@
+diff --git a/src/core/instructions.ts b/src/core/instructions.ts
+index 14bbc5987461fae2ed661b389e165e87c88bc113..3233e7edd26c67a4a22d512316164dfd03659887 100644
+--- a/src/core/instructions.ts
++++ b/src/core/instructions.ts
+@@ -45,7 +45,7 @@ export const DEFAULT_MULTI_AGENT_V2_MODEL_OVERRIDE_USAGE_HINT_TEXT =
+ export const DEFAULT_MULTI_AGENT_V2_WAIT_AGENT_USAGE_HINT_TEXT =
+ 	"When calling `wait_agent`, prefer longer waits (minutes) to avoid busy polling.";
+ 
+-export const DEFAULT_MULTI_AGENT_V2_SHARED_USAGE_HINT_TEXT = `Note that collaboration tools cannot be called from inside \`functions.exec\`. Call \`spawn_agent\`, \`send_message\`, \`followup_task\`, \`wait_agent\`, \`interrupt_agent\`, and \`list_agents\` only as direct tool calls using the recipient shown in their tool definitions, such as \`to=functions.collaboration.spawn_agent\`, since they are intentionally absent from the \`functions.exec\` \`tools.*\` namespace. Available tools in \`functions.exec\` are explicitly described with a \`tools\` namespace in the developer message.
++export const DEFAULT_MULTI_AGENT_V2_SHARED_USAGE_HINT_TEXT = `Use collaboration tools through the interface declared by the active harness. When listed as composed tools, call them as \`tools.<name>(...)\` inside \`codemode\`; otherwise use their declared direct tool interface. Do not assume an undeclared namespace or that an unavailable tool can be called.
+ 
+ All agents share the same directory. In detail:
+ - All agents have access to the same container and filesystem as you.
+diff --git a/src/extension.ts b/src/extension.ts
+index 99628c59daa93635f151624bc6a91fdad96b0a95..6cb5c1157fe4c766438252d4142987f9b6c00f35 100644
+--- a/src/extension.ts
++++ b/src/extension.ts
+@@ -183,7 +183,7 @@ export default function subagentsExtension(pi: ExtensionAPI): void {
+ 	};
+ 	const restoreRootCoordinator = (context: ExtensionContext): void => {
+ 		const sessionId = context.sessionManager.getSessionId();
+-		const checkpoint = latestSubagentTreeCheckpoint(context.sessionManager.getBranch());
++		const checkpoint = latestSubagentTreeCheckpoint(context.sessionManager.getEntries());
+ 		coordinator = createRootCoordinator(sessionId, {
+ 			...config,
+ 			rootSessionDir: subagentSessionRoot(context),
+diff --git a/src/runtime/agent-runner.ts b/src/runtime/agent-runner.ts
+index f860da634b38fe1da0341952a84b230f7dec0003..8b03bade3bf0d5bdc59feb68d6ccddb10b80d291 100644
+--- a/src/runtime/agent-runner.ts
++++ b/src/runtime/agent-runner.ts
+@@ -1,5 +1,5 @@
+ import type { AgentMessage, ThinkingLevel } from "@earendil-works/pi-agent-core";
+-import { clampThinkingLevel, getSupportedThinkingLevels, type Api, type Model } from "@earendil-works/pi-ai";
++import { clampThinkingLevel, getSupportedThinkingLevels, type Api, type CredentialStore, type Model } from "@earendil-works/pi-ai";
+ import {
+ 	type AgentSession,
+ 	type AgentSessionEvent,
+@@ -7,17 +7,18 @@ import {
+ 	type CreateAgentSessionRuntimeResult,
+ 	createAgentSession,
+ 	createAgentSessionRuntime,
++	createCodemodeExtension,
++	createToolSearchExtension,
+ 	DefaultResourceLoader,
+ 	type ExtensionAPI,
+ 	type ExtensionContext,
+ 	getAgentDir,
+-	type ModelRuntime,
++	ModelRuntime,
+ 	type SessionEntry,
+ 	SessionManager,
+ 	type SessionStartEvent,
+ 	SettingsManager,
+ } from "@earendil-works/pi-coding-agent";
+-import { listCodeModeToolNames } from "@luan.sh/pi-code-mode/sdk";
+ import { SUBAGENT_TASK_MESSAGE_TYPE } from "../core/fork-history.ts";
+ import { primePromptEnvelope } from "../protocol/prompt-envelope.ts";
+ import { buildAgentPrompt } from "../core/prompts.ts";
+@@ -165,17 +166,32 @@ function subscribeToolActivity(session: AgentSession, onToolActivity?: (activity
+ 	});
+ }
+ 
+-type ModelRegistryRuntimeBoundary = { runtime?: ModelRuntime };
+-
+-/**
+- * Pi 0.84 exposes ModelRuntime only through ModelRegistry's private compatibility field.
+- * Remove this adapter when the extension context exposes its runtime publicly.
+- */
+-function modelRuntimeFor(modelRegistry: ExtensionContext["modelRegistry"]): ModelRuntime {
+-	// type-boundary: Pi 0.84's ModelRegistry owns this runtime; the AgentSession factory validates it immediately.
+-	const runtime = (modelRegistry as object as ModelRegistryRuntimeBoundary).runtime;
+-	if (!runtime) throw new Error("Pi model runtime is unavailable to the subagent session");
+-	return runtime;
++type ModelRegistryRuntimeBoundary = {
++	runtime?: Pick<ModelRuntime, "getProviders" | "getAllModels"> & { credentials: CredentialStore; modelsPath?: string };
++};
++
++/** Catalog/auth may be inherited; virtual route callbacks belong to one session. */
++export async function createChildModelRuntime(modelRegistry: ExtensionContext["modelRegistry"]): Promise<ModelRuntime> {
++	// Pi exposes these through private compatibility fields until it offers a runtime fork API.
++	const parent = (modelRegistry as object as ModelRegistryRuntimeBoundary).runtime;
++	if (!parent?.credentials) throw new Error("Pi model runtime is unavailable to the subagent session");
++	const child = await ModelRuntime.create({
++		credentials: parent.credentials,
++		modelsPath: parent.modelsPath ?? null,
++		allowModelNetwork: false,
++		refreshOnCreate: false,
++	});
++	for (const provider of parent.getProviders()) {
++		const models = parent.getAllModels(provider.id).filter((model) => model.api !== "pi-virtual");
++		if (!models.length) continue;
++		child.registerNativeProvider({
++			...provider,
++			getModels: () => models.filter((model): model is Model<Api> => !model.type || model.type === "chat"),
++			getAllModels: () => models,
++		});
++	}
++	await child.refresh({ allowNetwork: false });
++	return child;
+ }
+ 
+ export interface PreparedAgentRun {
+@@ -183,6 +199,7 @@ export interface PreparedAgentRun {
+ 	agentDir: string;
+ 	systemPrompt: string;
+ 	toolNames: string[];
++	parentActiveToolNames: string[];
+ 	model: Model<Api> | undefined;
+ 	thinkingLevel: ThinkingLevel | undefined;
+ 	loader: DefaultResourceLoader;
+@@ -196,8 +213,24 @@ export function parseModelSelector(value: string): string {
+ 	return selector;
+ }
+ 
+-export function resolveChildToolNames(active: readonly string[], lifted: readonly string[]): string[] {
+-	return [...new Set([...active, ...lifted])];
++export function resolveChildToolNames(active: readonly string[], callable: readonly string[]): string[] {
++	return [...new Set([...active, ...callable])];
++}
++
++export function resolveChildActiveToolNames(inherited: readonly string[], active: readonly string[]): string[] {
++	const allowed = new Set(inherited);
++	return active.filter((name) => allowed.has(name));
++}
++
++// Pi's uncached extension imports can expose partially evaluated modules when
++// sibling sessions reload resources together. Serialize discovery, not agent work.
++const resourceLoadQueueKey = Symbol.for("agent-config.subagents.resource-load-queue.v1");
++const resourceLoadQueue = globalThis as typeof globalThis & { [resourceLoadQueueKey]?: Promise<void> };
++
++async function reloadChildResources(loader: DefaultResourceLoader): Promise<void> {
++	const next = (resourceLoadQueue[resourceLoadQueueKey] ?? Promise.resolve()).then(() => loader.reload());
++	resourceLoadQueue[resourceLoadQueueKey] = next.then(() => undefined, () => undefined);
++	await next;
+ }
+ 
+ export async function prepareAgentRun(
+@@ -206,12 +239,20 @@ export async function prepareAgentRun(
+ 	loadResources = true,
+ ): Promise<PreparedAgentRun> {
+ 	const effectiveCwd = options.cwd ?? ctx.cwd;
+-	const toolNames = resolveChildToolNames(options.pi.getActiveTools(), listCodeModeToolNames());
++	const parentActiveToolNames = options.pi.getActiveTools();
++	const callableToolNames = options.pi.getAllTools()
++		.filter((tool) => tool.exposure === "codemode" || tool.exposure === "deferred")
++		.map((tool) => tool.name);
++	const toolNames = resolveChildToolNames(parentActiveToolNames, callableToolNames);
+ 	const systemPrompt = buildAgentPrompt(ctx.getSystemPrompt(), options.collaboration);
+ 	const agentDir = getAgentDir();
+ 	const loader = new DefaultResourceLoader({
+ 		cwd: effectiveCwd,
+ 		agentDir,
++		extensionFactories: [
++			{ name: "codemode", factory: createCodemodeExtension(), replaceable: true, builtin: true },
++			{ name: "tool-search", factory: createToolSearchExtension(), replaceable: true, builtin: true },
++		],
+ 		noSkills: false,
+ 		noPromptTemplates: true,
+ 		noThemes: true,
+@@ -219,7 +260,7 @@ export async function prepareAgentRun(
+ 		systemPromptOverride: () => systemPrompt,
+ 		appendSystemPromptOverride: () => [],
+ 	});
+-	if (loadResources) await loader.reload();
++	if (loadResources) await reloadChildResources(loader);
+ 
+ 	const model = resolveModel(ctx, options.agentConfig.model);
+ 	const thinkingLevel = resolveThinkingLevel(
+@@ -232,7 +273,7 @@ export async function prepareAgentRun(
+ 		thinkingLevel,
+ 	});
+ 
+-	return { effectiveCwd, agentDir, systemPrompt, toolNames, model, thinkingLevel, loader };
++	return { effectiveCwd, agentDir, systemPrompt, toolNames, parentActiveToolNames, model, thinkingLevel, loader };
+ }
+ 
+ export function resolveModel(
+@@ -240,10 +281,12 @@ export function resolveModel(
+ 	reference: AgentModelReference | string | undefined,
+ ): Model<Api> | undefined {
+ 	if (!reference) return ctx.model;
+-	const models =
+-		ctx.scopedModels.length > 0 ? ctx.scopedModels.map(({ model }) => model) : ctx.modelRegistry.getAvailable();
+ 	const selector =
+ 		typeof reference === "string" ? parseModelSelector(reference) : `${reference.provider}/${reference.id}`;
++	// Scopes disambiguate short names; a qualified override names an authenticated catalog target.
++	const models = selector.includes("/") || ctx.scopedModels.length === 0
++		? ctx.modelRegistry.getAvailable()
++		: ctx.scopedModels.map(({ model }) => model);
+ 	const normalizedSelector = selector.toLowerCase();
+ 	const exactMatches = models.filter(
+ 		(candidate) =>
+@@ -287,12 +330,16 @@ export function resolveThinkingLevel(
+ 
+ export async function runAgent(ctx: ExtensionContext, prompt: string, options: RunOptions): Promise<RunResult> {
+ 	const prepared = await prepareAgentRun(ctx, options);
+-	const { effectiveCwd, agentDir, systemPrompt, toolNames, model, thinkingLevel, loader } = prepared;
++	const { effectiveCwd, agentDir, systemPrompt, toolNames, parentActiveToolNames, model, thinkingLevel, loader } = prepared;
+ 	const loadResources = async (cwd: string, resourceAgentDir: string) => {
+ 		if (cwd === effectiveCwd && resourceAgentDir === agentDir) return loader;
+ 		const resourceLoader = new DefaultResourceLoader({
+ 			cwd,
+ 			agentDir: resourceAgentDir,
++			extensionFactories: [
++				{ name: "codemode", factory: createCodemodeExtension(), replaceable: true, builtin: true },
++				{ name: "tool-search", factory: createToolSearchExtension(), replaceable: true, builtin: true },
++			],
+ 			noSkills: false,
+ 			noPromptTemplates: true,
+ 			noThemes: true,
+@@ -300,7 +347,7 @@ export async function runAgent(ctx: ExtensionContext, prompt: string, options: R
+ 			systemPromptOverride: () => systemPrompt,
+ 			appendSystemPromptOverride: () => [],
+ 		});
+-		await resourceLoader.reload();
++		await reloadChildResources(resourceLoader);
+ 		return resourceLoader;
+ 	};
+ 
+@@ -328,7 +375,7 @@ export async function runAgent(ctx: ExtensionContext, prompt: string, options: R
+ 			agentDir: runtimeAgentDir,
+ 			sessionManager: runtimeSessionManager,
+ 			settingsManager,
+-			modelRuntime: modelRuntimeFor(ctx.modelRegistry),
++			modelRuntime: await createChildModelRuntime(ctx.modelRegistry),
+ 			model,
+ 			thinkingLevel,
+ 			tools: toolNames,
+@@ -358,8 +405,9 @@ export async function runAgent(ctx: ExtensionContext, prompt: string, options: R
+ 			options.onToolActivity?.({ type: "end", toolName: `extension-error:${error.extensionPath}` });
+ 		},
+ 	});
+-	const availableTools = new Set(session.getAllTools().map((tool) => tool.name));
+-	const activeTools = toolNames.filter((toolName) => availableTools.has(toolName));
++	// session_start may deactivate tools. Preserve that policy while applying
++	// the parent's allowlist, rather than reactivating every registered tool.
++	const activeTools = resolveChildActiveToolNames(parentActiveToolNames, session.getActiveToolNames());
+ 	session.setActiveToolsByName(activeTools);
+ 	primePromptEnvelope({
+ 		provider: model?.provider,
+diff --git a/src/runtime/coordinator.ts b/src/runtime/coordinator.ts
+index 29496d515e70843531b9e82918e6dd23e468a395..fc9ed0562f98b3796298b8eb7fcbfe8c4d646013 100644
+--- a/src/runtime/coordinator.ts
++++ b/src/runtime/coordinator.ts
+@@ -1,5 +1,6 @@
+ import { existsSync, realpathSync } from "node:fs";
+ import { isAbsolute, join, relative } from "node:path";
++import { calculateCost, type AnthropicMessagesCompat, type Usage } from "@earendil-works/pi-ai";
+ import type { AgentMessage, ThinkingLevel } from "@earendil-works/pi-agent-core";
+ import {
+ 	type AgentSession,
+@@ -39,11 +40,15 @@ export interface SubagentSnapshot {
+ 	readonly completedAt?: number;
+ 	readonly toolUses: number;
+ 	readonly cost: number;
++	/** Usage records with no usable price; displayed totals are a lower bound. */
++	readonly costMissing?: number;
+ 	readonly tokenCount: number;
+ 	readonly contextPercent?: number;
+ 	readonly compactions: number;
+ 	readonly activity?: { readonly kind: "compacting" } | { readonly kind: "tool"; readonly name: string };
+ 	readonly model?: AgentModelReference;
++	/** Launch-time selection when it differs from the physical execution model. */
++	readonly selectedModel?: AgentModelReference;
+ 	readonly thinkingLevel?: ThinkingLevel;
+ 	readonly transcriptAvailable: boolean;
+ }
+@@ -100,11 +105,17 @@ export interface PersistedSubagentState {
+ 	readonly completedAt?: number;
+ 	readonly toolUses: number;
+ 	readonly cost: number;
++	readonly costMissing?: number;
++	/** Last append-order transcript entry included in cost; absent on legacy checkpoints. */
++	readonly costLastEntryId?: string | null;
+ 	readonly tokenCount: number;
+ 	readonly contextPercent?: number;
+ 	readonly compactions: number;
+ 	readonly model?: AgentModelReference;
+ 	readonly thinkingLevel?: ThinkingLevel;
++	/** Last child dispatch; keep model/thinkingLevel as the selection for restoration. */
++	readonly dispatchedModel?: AgentModelReference;
++	readonly dispatchedThinkingLevel?: ThinkingLevel;
+ 	readonly transcriptFile?: string;
+ 	readonly transcriptGeneration: number;
+ 	readonly forkNonBoundaryTimestamps?: readonly number[];
+@@ -129,6 +140,7 @@ interface LiveAgent extends Omit<Mutable<PersistedSubagentState>, "forkNonBounda
+ 	activeTools: string[];
+ 	latestInnerTool?: string;
+ 	session?: AgentSession;
++	costLedger?: SessionCostLedger;
+ 	runtime?: RunResult["runtime"];
+ 	abortController: AbortController;
+ 	request?: SpawnRequest;
+@@ -218,6 +230,8 @@ function isPersistedAgentState(value: object | null | undefined): value is Persi
+ 	const status = "status" in value ? value.status : undefined;
+ 	const model = "model" in value ? value.model : undefined;
+ 	const thinkingLevel = "thinkingLevel" in value ? value.thinkingLevel : undefined;
++	const dispatchedModel = "dispatchedModel" in value ? value.dispatchedModel : undefined;
++	const dispatchedThinkingLevel = "dispatchedThinkingLevel" in value ? value.dispatchedThinkingLevel : undefined;
+ 	const completionDelivery = "completionDelivery" in value ? value.completionDelivery : undefined;
+ 	return (
+ 		"cwd" in value &&
+@@ -231,6 +245,11 @@ function isPersistedAgentState(value: object | null | undefined): value is Persi
+ 		isFiniteNumber(value, "startedAt") &&
+ 		isFiniteNumber(value, "toolUses") &&
+ 		isFiniteNumber(value, "cost") &&
++		(value.costMissing === undefined || (isFiniteNumber(value, "costMissing") && Number(value.costMissing) >= 0)) &&
++		(!("costLastEntryId" in value) ||
++			value.costLastEntryId === undefined ||
++			value.costLastEntryId === null ||
++			typeof value.costLastEntryId === "string") &&
+ 		isFiniteNumber(value, "tokenCount") &&
+ 		isFiniteNumber(value, "compactions") &&
+ 		isFiniteNumber(value, "transcriptGeneration") &&
+@@ -244,6 +263,10 @@ function isPersistedAgentState(value: object | null | undefined): value is Persi
+ 		(!("error" in value) || value.error === undefined || typeof value.error === "string") &&
+ 		(model === undefined || (typeof model === "object" && model !== null && isModelReference(model))) &&
+ 		(thinkingLevel === undefined || (typeof thinkingLevel === "string" && isThinkingLevel(thinkingLevel))) &&
++		(dispatchedModel === undefined ||
++			(typeof dispatchedModel === "object" && dispatchedModel !== null && isModelReference(dispatchedModel))) &&
++		(dispatchedThinkingLevel === undefined ||
++			(typeof dispatchedThinkingLevel === "string" && isThinkingLevel(dispatchedThinkingLevel))) &&
+ 		(!("transcriptFile" in value) || value.transcriptFile === undefined || typeof value.transcriptFile === "string") &&
+ 		(!("forkNonBoundaryTimestamps" in value) ||
+ 			value.forkNonBoundaryTimestamps === undefined ||
+@@ -272,11 +295,12 @@ export function latestSubagentTreeCheckpoint(entries: readonly SessionEntry[]):
+ 	});
+ }
+ 
+-function loadPersistedTranscript(file?: string): readonly AgentMessage[] | undefined {
++function loadPersistedTranscript(file?: string): { entries: SessionEntry[]; messages: readonly AgentMessage[] } | undefined {
+ 	if (!file || !existsSync(file)) return undefined;
+ 	try {
+ 		const manager = SessionManager.open(file);
+-		return Object.freeze([...buildSessionContext(manager.getEntries(), manager.getLeafId()).messages]);
++		const entries = manager.getEntries();
++		return { entries, messages: Object.freeze([...buildSessionContext(entries, manager.getLeafId()).messages]) };
+ 	} catch {
+ 		return undefined;
+ 	}
+@@ -346,18 +370,142 @@ function transcriptPreview(message?: AgentMessage): TranscriptPreview | undefine
+ 	return undefined;
+ }
+ 
+-function reportedCost(usage?: { cost?: { total?: number } }): number {
++type Registry = Pick<ExtensionContext["modelRegistry"], "find">;
++
++function reportedCost(usage?: Usage): number {
+ 	const cost = usage?.cost?.total ?? 0;
+ 	return Number.isFinite(cost) && cost > 0 ? cost : 0;
+ }
+ 
+-function messageCost(message: AgentMessage): number {
+-	return message.role === "assistant" || message.role === "toolResult" ? reportedCost(message.usage) : 0;
++function modelCost(
++	usage: Usage,
++	provider: string,
++	modelId: string,
++	responseModel: string | undefined,
++	registry?: Registry,
++): number {
++	// Provider totals preserve request-time pricing and service-tier multipliers.
++	if (Number.isFinite(usage.cost?.total) && usage.cost.total >= 0) return usage.cost.total;
++	const requested = registry?.find(provider, modelId);
++	const fallback = (requested?.compat as AnthropicMessagesCompat | undefined)?.allowedFallbackModels?.find(
++		(model) => model.provider === provider && model.model === responseModel,
++	);
++	const model =
++		(responseModel && registry?.find(provider, responseModel)) ||
++		(requested && fallback ? { ...requested, cost: fallback.cost } : requested);
++	if (!model) return Number.NaN;
++	// calculateCost mutates usage.cost; never rewrite persisted provider telemetry.
++	const cost = calculateCost(model, { ...usage, cost: { ...usage.cost } }).total;
++	return Number.isFinite(cost) && cost >= 0 ? cost : Number.NaN;
++}
++
++type ClassifierUsageRecord = {
++	version: 1;
++	id: string;
++	provider: string;
++	model: string;
++	responseModel?: string;
++	usage?: Usage;
++};
++
++// Public custom-entry contract shared with the routing extension.
++function classifierUsageRecord(entry: SessionEntry): ClassifierUsageRecord | undefined {
++	if (entry.type !== "custom" || entry.customType !== "routing:usage-v1") return undefined;
++	const data = entry.data as Partial<ClassifierUsageRecord> | undefined;
++	if (
++		data?.version !== 1 ||
++		typeof data.id !== "string" ||
++		!data.id ||
++		typeof data.provider !== "string" ||
++		typeof data.model !== "string" ||
++		(data.responseModel !== undefined && typeof data.responseModel !== "string") ||
++		(data.usage !== undefined && (!data.usage || typeof data.usage !== "object"))
++	) return undefined;
++	return data as ClassifierUsageRecord;
++}
++
++export function entryCost(entry: SessionEntry, registry?: Registry): number {
++	const classifier = classifierUsageRecord(entry);
++	// The routing writer freezes request-time prices. Unknown is not free.
++	if (classifier) return reportedCost(classifier.usage);
++	if (entry.type === "usage") return modelCost(entry.usage, entry.provider, entry.model, undefined, registry) || 0;
++	if (entry.type === "compaction" || entry.type === "branch_summary") return reportedCost(entry.usage);
++	if (entry.type !== "message") return 0;
++	const message = entry.message;
++	if (message.role === "assistant")
++		return modelCost(message.usage, message.provider, message.model, message.responseModel, registry) || 0;
++	return message.role === "toolResult" ? reportedCost(message.usage) : 0;
++}
++
++/** Count unknown prices separately from the known dollar lower bound. */
++export function entryMissing(entry: SessionEntry, registry?: Registry): number {
++	const classifier = classifierUsageRecord(entry);
++	let usage: Usage | undefined;
++	let cost: number | undefined;
++	if (classifier) {
++		usage = classifier.usage;
++		cost = usage?.cost?.total;
++	} else if (entry.type === "usage") {
++		cost = modelCost(entry.usage, entry.provider, entry.model, undefined, registry);
++	} else if (entry.type === "compaction" || entry.type === "branch_summary") {
++		usage = entry.usage;
++		if (!usage) return 0;
++		cost = usage.cost?.total;
++	} else if (entry.type === "message") {
++		const message = entry.message;
++		if (message.role === "assistant") {
++			cost = modelCost(message.usage, message.provider, message.model, message.responseModel, registry);
++		} else if (message.role === "toolResult" && message.usage) {
++			cost = message.usage.cost?.total;
++		} else return 0;
++	} else return 0;
++	return Number(typeof cost !== "number" || !Number.isFinite(cost) || cost < 0);
++}
++
++/** Charge each persisted entry once, excluding history copied into a new child runtime. */
++export class SessionCostLedger {
++	private readonly seen: Set<string>;
++	private readonly classifierIds: Set<string>;
++	missing = 0;
++	lastEntryId: string | null;
++	constructor(
++		entries: readonly SessionEntry[],
++		private readonly registry?: Registry,
++	) {
++		this.seen = new Set(entries.map((entry) => entry.id));
++		this.classifierIds = new Set(entries.flatMap((entry) => {
++			const classifier = classifierUsageRecord(entry);
++			return classifier ? [classifier.id] : [];
++		}));
++		this.lastEntryId = entries.at(-1)?.id ?? null;
++	}
++	collect(entries: readonly SessionEntry[]): number {
++		let cost = 0;
++		this.missing = 0;
++		for (const entry of entries) {
++			if (this.seen.has(entry.id)) continue;
++			this.seen.add(entry.id);
++			const classifier = classifierUsageRecord(entry);
++			if (classifier) {
++				if (this.classifierIds.has(classifier.id)) continue;
++				this.classifierIds.add(classifier.id);
++			}
++			cost += entryCost(entry, this.registry);
++			this.missing += entryMissing(entry, this.registry);
++		}
++		this.lastEntryId = entries.at(-1)?.id ?? null;
++		return cost;
++	}
+ }
+ 
+ function snapshotOf(agent: LiveAgent): SubagentSnapshot {
+ 	const activeTool = agent.activeTools.at(-1);
+ 	const visibleTool = activeTool === "exec" && agent.latestInnerTool ? agent.latestInnerTool : activeTool;
++	const model = agent.dispatchedModel ?? agent.model;
++	const selectedModel =
++		agent.model && model && (agent.model.provider !== model.provider || agent.model.id !== model.id)
++			? agent.model
++			: undefined;
+ 	return Object.freeze({
+ 		id: agent.id,
+ 		rootSessionId: agent.rootSessionId,
+@@ -372,6 +520,7 @@ function snapshotOf(agent: LiveAgent): SubagentSnapshot {
+ 		completedAt: agent.completedAt,
+ 		toolUses: agent.toolUses,
+ 		cost: agent.cost,
++		costMissing: agent.costMissing,
+ 		tokenCount: agent.tokenCount,
+ 		contextPercent: agent.contextPercent,
+ 		compactions: agent.compactions,
+@@ -380,8 +529,9 @@ function snapshotOf(agent: LiveAgent): SubagentSnapshot {
+ 			: visibleTool
+ 				? { kind: "tool" as const, name: visibleTool }
+ 				: undefined,
+-		model: agent.model ? Object.freeze({ ...agent.model }) : undefined,
+-		thinkingLevel: agent.thinkingLevel,
++		model: model ? Object.freeze({ ...model }) : undefined,
++		selectedModel: selectedModel ? Object.freeze({ ...selectedModel }) : undefined,
++		thinkingLevel: agent.dispatchedModel ? agent.dispatchedThinkingLevel : agent.thinkingLevel,
+ 		transcriptAvailable: Boolean(agent.session || agent.restoredMessages),
+ 	});
+ }
+@@ -400,11 +550,15 @@ function persistedStateOf(agent: LiveAgent): PersistedSubagentState {
+ 		completedAt: agent.completedAt,
+ 		toolUses: agent.toolUses,
+ 		cost: agent.cost,
++		costMissing: agent.costMissing,
++		costLastEntryId: agent.costLastEntryId,
+ 		tokenCount: agent.tokenCount,
+ 		contextPercent: agent.contextPercent,
+ 		compactions: agent.compactions,
+ 		model: agent.model ? Object.freeze({ ...agent.model }) : undefined,
+ 		thinkingLevel: agent.thinkingLevel,
++		dispatchedModel: agent.dispatchedModel ? Object.freeze({ ...agent.dispatchedModel }) : undefined,
++		dispatchedThinkingLevel: agent.dispatchedThinkingLevel,
+ 		transcriptFile: agent.session?.sessionManager.getSessionFile?.() ?? agent.transcriptFile,
+ 		transcriptGeneration: agent.transcriptGeneration,
+ 		forkNonBoundaryTimestamps: Object.freeze([...agent.forkNonBoundaryTimestamps].sort((a, b) => a - b)),
+@@ -551,9 +705,11 @@ export class SubagentCoordinator {
+ 	}
+ 
+ 	snapshot(): readonly SubagentSnapshot[] {
++		for (const agent of this.agents.values()) this.refreshSessionCost(agent);
+ 		return Object.freeze([...this.agents.values()].map(snapshotOf).sort((a, b) => a.id.localeCompare(b.id)));
+ 	}
+ 	checkpoint(): SubagentTreeCheckpoint {
++		for (const agent of this.agents.values()) this.refreshSessionCost(agent);
+ 		return Object.freeze({
+ 			version: 1,
+ 			agents: Object.freeze([...this.agents.values()].map(persistedStateOf).sort((a, b) => a.id.localeCompare(b.id))),
+@@ -561,6 +717,7 @@ export class SubagentCoordinator {
+ 	}
+ 	persistedAgent(target: string): PersistedSubagentState | undefined {
+ 		const agent = this.agents.get(target);
++		if (agent) this.refreshSessionCost(agent);
+ 		return agent ? persistedStateOf(agent) : undefined;
+ 	}
+ 
+@@ -569,7 +726,22 @@ export class SubagentCoordinator {
+ 		for (const saved of checkpoint.agents) {
+ 			const wasActive = saved.status === "queued" || saved.status === "running";
+ 			const transcriptFile = childTranscriptFile(this.rootSessionDir, saved.id, saved.transcriptFile);
+-			const restoredMessages = loadPersistedTranscript(transcriptFile);
++			const transcript = loadPersistedTranscript(transcriptFile);
++			const restoredMessages = transcript?.messages;
++			let cost = saved.cost;
++			let costMissing = saved.costMissing ?? 0;
++			let costLastEntryId = saved.costLastEntryId;
++			if (transcript) {
++				// A child can persist usage before its parent checkpoints it. Recover only
++				// the append-order tail, not inherited history or previously charged branches.
++				const entries = transcript.entries;
++				const index = entries.findIndex((entry) => entry.id === saved.costLastEntryId);
++				const baseline = saved.costLastEntryId === null ? [] : index >= 0 ? entries.slice(0, index + 1) : entries;
++				const ledger = new SessionCostLedger(baseline, runtime?.ctx.modelRegistry);
++				cost += ledger.collect(entries);
++				costMissing += ledger.missing;
++				costLastEntryId = ledger.lastEntryId;
++			}
+ 			const agent: LiveAgent = {
+ 				id: saved.id,
+ 				parentId: saved.parentId,
+@@ -580,12 +752,16 @@ export class SubagentCoordinator {
+ 				error: saved.error,
+ 				startedAt: saved.startedAt,
+ 				toolUses: saved.toolUses,
+-				cost: saved.cost,
++				cost,
++				costMissing,
++				costLastEntryId,
+ 				tokenCount: saved.tokenCount,
+ 				contextPercent: saved.contextPercent,
+ 				compactions: saved.compactions,
+ 				model: saved.model ? { ...saved.model } : undefined,
+ 				thinkingLevel: saved.thinkingLevel,
++				dispatchedModel: saved.dispatchedModel ? { ...saved.dispatchedModel } : undefined,
++				dispatchedThinkingLevel: saved.dispatchedThinkingLevel,
+ 				completionDelivery: saved.completionDelivery ?? "parent",
+ 				transcriptGeneration: saved.transcriptGeneration,
+ 				transcriptFile,
+@@ -782,6 +958,8 @@ export class SubagentCoordinator {
+ 	private attachSession(agent: LiveAgent, session: AgentSession, generation: number): void {
+ 		if (this.disposed || agent.turnGeneration !== generation) return;
+ 		agent.session = session;
++		// Existing entries are inherited history (also on restored-agent follow-up).
++		agent.costLedger = new SessionCostLedger(session.sessionManager.getEntries(), agent.request?.ctx.modelRegistry);
+ 		agent.presentationUnregister?.();
+ 		agent.presentationUnregister = registerPresentationResolver(agent.id, {
+ 			resolveTool: (name) => session.getToolDefinition(name),
+@@ -793,13 +971,21 @@ export class SubagentCoordinator {
+ 		this.childSessions.set(session.sessionManager.getSessionId(), agent.id);
+ 		bindSessionToRoot(this.rootSessionId, session.sessionManager.getSessionId());
+ 		agent.sessionUnsubscribe = session.subscribe((event) => {
+-			let changed = false;
++			const previousCost = agent.cost;
++			this.refreshSessionCost(agent);
++			let changed = agent.cost !== previousCost;
++			// Observe only this child's own dispatches, never copied parent history or
++			// auxiliary classifier calls. message_start exposes the model while streaming.
++			if ((event.type === "message_start" || event.type === "message_end") && event.message.role === "assistant" && event.message.api !== "pi-virtual") {
++				agent.dispatchedModel = { provider: event.message.provider, id: event.message.model };
++				agent.dispatchedThinkingLevel = event.message.thinkingLevel;
++				changed = true;
++			}
+ 			if (event.type === "compaction_start") {
+ 				agent.compacting = true;
+ 				changed = true;
+ 			}
+ 			if (event.type === "message_end") {
+-				agent.cost += messageCost(event.message);
+ 				this.refreshSessionStats(agent, session);
+ 				changed = true;
+ 			}
+@@ -808,7 +994,6 @@ export class SubagentCoordinator {
+ 				changed = true;
+ 				if (!event.aborted) {
+ 					agent.transcriptGeneration++;
+-					agent.cost += reportedCost(event.result?.usage);
+ 					agent.compactions++;
+ 					this.refreshSessionStats(agent, session);
+ 				}
+@@ -928,7 +1113,15 @@ export class SubagentCoordinator {
+ 		this.disposedRuntimes.add(runtime);
+ 		void runtime.dispose().catch(() => undefined);
+ 	}
++	private refreshSessionCost(agent: LiveAgent): void {
++		if (agent.session && agent.costLedger) {
++			agent.cost += agent.costLedger.collect(agent.session.sessionManager.getEntries());
++			agent.costMissing = (agent.costMissing ?? 0) + agent.costLedger.missing;
++			agent.costLastEntryId = agent.costLedger.lastEntryId;
++		}
++	}
+ 	private refreshSessionStats(agent: LiveAgent, session: AgentSession): void {
++		this.refreshSessionCost(agent);
+ 		const stats = session.getSessionStats();
+ 		agent.tokenCount = stats.tokens.total;
+ 		agent.contextPercent = stats.contextUsage?.percent ?? undefined;
+diff --git a/src/tools/result.ts b/src/tools/result.ts
+index b35d4f66572584899eb5913f4dd2a6bfb64cbec0..01af8e0b51b441b0f747e161abad8fe3a3b94c66 100644
+--- a/src/tools/result.ts
++++ b/src/tools/result.ts
+@@ -11,6 +11,7 @@ export interface AgentRecord {
+ 	status: SubagentSnapshot["status"];
+ 	description: string;
+ 	model?: string;
++	selectedModel?: string;
+ 	thinkingLevel?: string;
+ 	startedAt: number;
+ 	completedAt?: number;
+@@ -60,6 +61,7 @@ export function agentRecord(
+ 			status: agent.status,
+ 			description: agent.description,
+ 			model: agent.model ? `${agent.model.provider}/${agent.model.id}` : undefined,
++			selectedModel: agent.selectedModel ? `${agent.selectedModel.provider}/${agent.selectedModel.id}` : undefined,
+ 			thinkingLevel: agent.thinkingLevel,
+ 			startedAt: agent.startedAt,
+ 			completedAt: agent.completedAt,
+diff --git a/src/ui/agent-summary.ts b/src/ui/agent-summary.ts
+index 4995298204c54ba28fc0943b78d26dbd485ee0af..5140b9341b036abccac194e52ffa923fa7c4b3c9 100644
+--- a/src/ui/agent-summary.ts
++++ b/src/ui/agent-summary.ts
+@@ -9,7 +9,7 @@ import type { SubagentSnapshot, SubagentStatus, TranscriptPreview } from "../run
+ 
+ type AgentRowSummary = Pick<
+ 	SubagentSnapshot,
+-	"status" | "startedAt" | "completedAt" | "cost" | "model" | "thinkingLevel"
++	"status" | "startedAt" | "completedAt" | "cost" | "model" | "selectedModel" | "thinkingLevel"
+ >;
+ 
+ export function formatAgentCost(cost: number): string {
+@@ -68,7 +68,8 @@ export function renderAgentIdentity(
+ export function renderAgentMetadata(colors: TuiTheme, agent: AgentRowSummary, now: number, separator = " · "): string {
+ 	const duration = colors.fg("text.muted", formatAgentDuration((agent.completedAt ?? now) - agent.startedAt));
+ 	const cost = colors.fg("text.muted", formatAgentCost(agent.cost));
+-	const model = agent.model ? colors.fg("text.secondary", `${agent.model.provider}/${agent.model.id}`) : undefined;
++	const selected = agent.selectedModel ? ` (via ${agent.selectedModel.provider}/${agent.selectedModel.id})` : "";
++	const model = agent.model ? colors.fg("text.secondary", `${agent.model.provider}/${agent.model.id}${selected}`) : undefined;
+ 	const thinking = agent.thinkingLevel ? colors.fg("text.muted", agent.thinkingLevel) : undefined;
+ 	return [model, thinking, duration, cost]
+ 		.filter((value): value is string => value !== undefined)

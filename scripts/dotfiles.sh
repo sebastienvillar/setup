@@ -105,12 +105,45 @@ install_codex() {
   done
 }
 
+PI_AGENT_DIR="$HOME/.pi/agent"
+PI_AGENT_FILES=(AGENTS.md tui.json rules package.json package-lock.json .npmrc)
+
 install_pi() {
-  echo "Installing Pi prompts..."
-  mkdir -p "$HOME/.pi/agent/prompts"
+  echo "Installing Pi prompts, extensions, and rules..."
+  mkdir -p "$PI_AGENT_DIR/prompts" "$PI_AGENT_DIR/extensions"
   for prompt in "$DOTFILES_DIR/pi/prompts"/*; do
     [[ -e "$prompt" ]] || continue
-    copy "$prompt" "$HOME/.pi/agent/prompts/$(basename "$prompt")"
+    copy "$prompt" "$PI_AGENT_DIR/prompts/$(basename "$prompt")"
+  done
+  for extension in "$DOTFILES_DIR/pi/extensions"/*/; do
+    extension="${extension%/}"
+    copy "$extension" "$PI_AGENT_DIR/extensions/$(basename "$extension")"
+  done
+  for name in "${PI_AGENT_FILES[@]}"; do
+    copy "$DOTFILES_DIR/pi/$name" "$PI_AGENT_DIR/$name"
+  done
+
+  # session-timers/ registers the same session_timer tool as this older single-file extension.
+  if [[ -e "$PI_AGENT_DIR/extensions/session-timer.ts" ]]; then
+    backup "$PI_AGENT_DIR/extensions/session-timer.ts"
+    safe_remove "$PI_AGENT_DIR/extensions/session-timer.ts"
+  fi
+
+  install_pi_packages
+}
+
+# Installs the @luan.sh packages the extensions import, then applies the local patches.
+# npm ci starts from an empty node_modules, so the patches apply cleanly on every run.
+install_pi_packages() {
+  echo "Installing Pi extension packages..."
+  (cd "$PI_AGENT_DIR" && npm ci --silent --no-audit --no-fund)
+  local patch_file package
+  for patch_file in "$DOTFILES_DIR/pi/patches"/*.patch; do
+    # "@luan.sh%2Fpi-libtui@0.3.9.patch" -> "@luan.sh/pi-libtui"
+    package="$(basename "$patch_file" .patch)"
+    package="${package//%2F//}"
+    package="${package%@*}"
+    patch --quiet -p1 -d "$PI_AGENT_DIR/node_modules/$package" < "$patch_file"
   done
 }
 
@@ -161,7 +194,14 @@ uninstall() {
 
   for prompt in "$DOTFILES_DIR/pi/prompts"/*; do
     [[ -e "$prompt" ]] || continue
-    safe_remove "$HOME/.pi/agent/prompts/$(basename "$prompt")"
+    safe_remove "$PI_AGENT_DIR/prompts/$(basename "$prompt")"
+  done
+  for extension in "$DOTFILES_DIR/pi/extensions"/*/; do
+    extension="${extension%/}"
+    safe_remove "$PI_AGENT_DIR/extensions/$(basename "$extension")"
+  done
+  for name in "${PI_AGENT_FILES[@]}" node_modules; do
+    safe_remove "$PI_AGENT_DIR/$name"
   done
   echo "Done. Dotfiles removed."
 }
@@ -189,7 +229,7 @@ show_help() {
   echo "  tmux        Install tmux config"
   echo "  claude      Install Claude settings"
   echo "  codex       Install Codex settings"
-  echo "  pi          Install Pi prompts"
+  echo "  pi          Install Pi prompts, extensions, and rules"
   echo "  uninstall   Remove installed dotfiles"
   echo "  restore     Restore files from latest backup"
   echo "  help        Show this help"

@@ -1,0 +1,11 @@
+{
+  "name": "pi-agent-extensions",
+  "private": true,
+  "description": "Runtime packages for the Pi extensions in extensions/. Pi supplies @earendil-works/* and typebox itself.",
+  "dependencies": {
+    "@luan.sh/pi-libactions": "0.3.3",
+    "@luan.sh/pi-libtui": "0.3.9",
+    "@luan.sh/pi-subagents": "0.3.9",
+    "@luan.sh/pi-xsettings": "0.3.3"
+  }
+}

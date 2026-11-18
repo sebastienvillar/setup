@@ -11,7 +11,7 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 
 - `scripts/` — installer logic. Each top-level step has its own script:
   - `brew.sh` / `brew-devbox.sh` — Homebrew packages (laptop vs devbox), plus the `figma/paste` setup.
-  - `dotfiles.sh` — installs `~/.zshrc`, `~/.tmux.conf`, Codex config and agents into `~/.codex/`, Codex skills into `~/.agents/skills/`, Codex prompts into `~/.codex/prompts/`, and Pi prompts into `~/.pi/agent/prompts/`.
+  - `dotfiles.sh` — installs `~/.zshrc`, `~/.tmux.conf`, Codex config and agents into `~/.codex/`, Codex skills into `~/.agents/skills/`, Codex prompts into `~/.codex/prompts/`, and Pi prompts, extensions, rules, `AGENTS.md`, and `tui.json` into `~/.pi/agent/` (then `npm ci` plus `dotfiles/pi/patches/` for extension packages).
   - `configs.sh` — installs Cursor and VS Code `settings.json` and `keybindings.json` (paths differ on macOS vs Linux).
   - `scripts.sh` — copies helper scripts into `~/.local/bin/` (currently `terminal-title`).
   - `lib.sh` — shared helpers: `copy`, `backup`, `safe_remove`, `restore_from_backup`, `init_backup`.
@@ -31,6 +31,8 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 - New dotfile → add a `copy` call in `scripts/dotfiles.sh` (and a matching `safe_remove` in `uninstall`).
 - New Codex prompt → add it to `dotfiles/codex/prompts/`; `scripts/dotfiles.sh` installs it into `~/.codex/prompts/`.
 - New Pi prompt (a `/name` command in Pi) → add it to `dotfiles/pi/prompts/`; `scripts/dotfiles.sh` installs it into `~/.pi/agent/prompts/`.
+- New Pi extension → add a directory with `index.ts` to `dotfiles/pi/extensions/`; Pi auto-discovers it in `~/.pi/agent/extensions/`. Add npm imports to `dotfiles/pi/package.json` and rerun `npm install --package-lock-only` there. Do not add `@earendil-works/*` or `typebox`; Pi supplies them.
+- New Pi rule → add it to `dotfiles/pi/rules/` and list it in `dotfiles/pi/AGENTS.md`.
 - New editor → mirror the cursor/vscode pattern in `scripts/configs.sh`.
 - New helper script for `~/.local/bin` → add to `scripts/scripts.sh`.
 - Devbox-specific behavior → branch on `$DEVBOX` and add a `*-devbox` source file.
