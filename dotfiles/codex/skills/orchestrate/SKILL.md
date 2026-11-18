@@ -19,11 +19,29 @@ Have subagents and workers use a test-first requirement with fail-before evidenc
 
 # Timers and state
 
-A recurring session timer (every 5–15 min) wakes you up. On each tick, you refresh every tracked PR with `gh` (merges, the merge queue, CI failures, ReviewBot findings), check each box for its `.done` marker and whether `run.sh` is still running, and watch disk space.
+A recurring session timer wakes you up every 5 minutes (`interval_seconds: 300`). On each tick, you refresh every tracked PR with `gh` (merges, the merge queue, CI failures, ReviewBot findings), check each box for its `.done` marker and whether `run.sh` is still running, and watch disk space. Then you post a status update.
 
-You only speak up when something changes, plus a short digest every ~30 min. When all the work is done, you cancel the timer.
+Don't wait for the next tick when something important happens. Post a status update right away when:
+
+- a PR is created
+- a PR is ready for me to review, queue, label, or mark ready
+- a subagent or worker needs my attention (a question, a decision, a blocker it can't clear)
+
+When all the work is done, you post a final status update and cancel the timer.
 
 Durable state is kept in a small key-value store that survives context compaction: my preferences, key decisions, tracked PRs, worker sessions, blocked items. A one-off ask from me becomes a standing rule there, e.g. "never report a PR's state from memory".
+
+## Status update format
+
+Refresh each PR with `gh` before you write the update. Group PRs by what I need to do, in this order, and leave out empty sections:
+
+1. Merge queue: one sentence with the count of PRs in the queue (approved, with `ready-to-merge`), then one bullet per PR or related group: link, ticket, and a few words on what it is. Then one line for each PR that merged or closed since the last update, e.g. "[#1072080](https://github.com/figma/figma/pull/1072080) (the config-mirror change) is closed, so I've dropped it."
+2. **Waiting on your review.** One line on the shared CI state, then a table with the columns `PR | Ticket | What it is | Notes`. Notes say what I need to do or what blocks the PR. Bold the note when it is the blocker, e.g. "**#1067020 needs your Cortex schema sign-off.**"
+3. **Not ready for review yet**: a table with the columns `PR | What | Waiting on`.
+4. **Parked, ignore for now**: one bullet per ticket or PR, with what blocks it and what to do once it unblocks.
+5. **If you only do three things:** a numbered list of the three most important actions for me, or fewer if there are fewer.
+
+Link every PR as a markdown link labeled with its number, e.g. `[#1068320](https://github.com/figma/figma/pull/1068320)`. Never print a bare PR URL. Write a stack bottom-up on one line, joined with `→`. Keep table cells to a short phrase.
 
 # Getting my attention
 
@@ -35,7 +53,7 @@ When something needs me, ping me on Slack in channel `C0CJJ4S23GF` (https://figm
 - a failure you or the workers can't resolve (CI, ReviewBot, a box out of disk or stuck)
 - all the work is done
 
-Keep each ping short: what happened, the PR or Linear link, and what you need from me. Don't ping for routine progress; that goes in the ~30 min digest. Don't ping about the same item twice unless its state changes. Record each ping in the key-value store so this holds across compaction.
+Keep each ping short: what happened, the PR or Linear link, and what you need from me. Don't ping for routine progress; that goes in the status update. Don't ping about the same item twice unless its state changes. Record each ping in the key-value store so this holds across compaction.
 
 # Guardrails
 
