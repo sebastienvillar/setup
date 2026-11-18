@@ -14,6 +14,10 @@ Pi auto-discovers each `*/index.ts` in `~/.pi/agent/extensions/`:
 - `convergence-loop/`: `/loop` and `/goal`
 - `tui/`: footer and editor chrome, `/cost`, `/usage-bars` (reads `~/.pi/agent/tui.json`)
 
+Local additions, not from jfmyers9/agent:
+
+- `collapse-tools/`: collapsed tool calls show one line with the tool and its command; click a row or press `Ctrl+O` to show the full rendering
+
 `shared/`, `routing/`, and `subagents/` hold only the modules these extensions import. They have no `index.ts`, so Pi does not load them as extensions.
 
 `../package.json` lists the `@luan.sh/*` packages they import. Pi supplies `@earendil-works/*` and `typebox`, so `../.npmrc` turns off peer installs. `scripts/dotfiles.sh pi` runs `npm ci` in `~/.pi/agent` and then applies `../patches/`.
