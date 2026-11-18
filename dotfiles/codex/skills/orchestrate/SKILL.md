@@ -27,7 +27,7 @@ Durable state is kept in a small key-value store that survives context compactio
 
 # Getting my attention
 
-When something needs me, DM me on Slack. Call `mcp__slack__slack_send_message` from codemode with `channel_id: "U091BBA15GF"` (my user ID, which is the DM channel). Things that need me:
+When something needs me, ping me on Slack in channel `C0CJJ4S23GF` (https://figma.slack.com/archives/C0CJJ4S23GF/p1795026180352259). Call `mcp__slack__slack_send_message` from codemode with `channel_id: "C0CJJ4S23GF"`, and start the message with `<@U091BBA15GF>` (my user ID) so it notifies me. Things that need me:
 
 - you need a decision or direction before work can continue
 - an item is blocked on me (access, review, a question)
@@ -35,7 +35,7 @@ When something needs me, DM me on Slack. Call `mcp__slack__slack_send_message` f
 - a failure you or the workers can't resolve (CI, ReviewBot, a box out of disk or stuck)
 - all the work is done
 
-Keep each DM short: what happened, the PR or Linear link, and what you need from me. Don't DM routine progress; that goes in the ~30 min digest. Don't DM the same item twice unless its state changes. Record each DM in the key-value store so this holds across compaction.
+Keep each ping short: what happened, the PR or Linear link, and what you need from me. Don't ping for routine progress; that goes in the ~30 min digest. Don't ping about the same item twice unless its state changes. Record each ping in the key-value store so this holds across compaction.
 
 # Guardrails
 
