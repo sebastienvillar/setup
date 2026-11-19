@@ -17,7 +17,7 @@ Pi auto-discovers each `*/index.ts` in `~/.pi/agent/extensions/`:
 Local additions, not from jfmyers9/agent:
 
 - `collapse-tools/`: collapsed tool calls show one line with the tool and its command; click a row or press `Ctrl+O` to show the full rendering
-- `transcript-window/`: in fullscreen mode, renders only the last 50 transcript entries under a "Trimmed N messages" line, hiding the startup header until everything is shown. Scrolling up from the top reveals 50 more without moving the view, and returning to the bottom trims again. Transcript search only sees rendered entries
+- `transcript-window/`: in fullscreen mode, renders only the last 50 transcript entries under a "Trimmed N messages" line, hiding the startup header until everything is shown. Scrolling up from the top reveals 50 more without moving the view; scrolling back down trims batches that end two screens above the view, and the bottom trims to 50. Transcript search only sees rendered entries
 
 `shared/`, `routing/`, and `subagents/` hold only the modules these extensions import. They have no `index.ts`, so Pi does not load them as extensions.
 

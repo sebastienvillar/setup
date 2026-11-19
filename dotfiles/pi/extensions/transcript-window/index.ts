@@ -95,7 +95,12 @@ function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 		const view = primaryScrollView(tui);
 		if (!view) return children;
 		watchTopScrolls(view);
-		const scroll = { following: view.isFollowingEnd, viewportHeight: view.viewportHeight, revealOlder: revealRequested };
+		const scroll = {
+			following: view.isFollowingEnd,
+			scrollTop: view.scrollTop,
+			viewportHeight: view.viewportHeight,
+			revealOlder: revealRequested,
+		};
 		revealRequested = false;
 		const selection = window.select(children, scroll, (child) => child.render(width).length);
 		const { visible, hidden } = selection;
@@ -107,11 +112,11 @@ function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 		const lead = hidden > 0 ? [notice] : [header, resources];
 		const previousLeadRows = leadRows;
 		leadRows = lead.reduce((rows, child) => rows + child.render(width).length, 0);
-		// Scroll down by the rows revealed above, during the same layout pass, so the view holds still.
-		// The lead rows sit above them, so their height change counts too. scrollTo would clamp
-		// against the previous frame's shorter content height.
-		if (selection.prepended > 0) {
-			const shift = selection.prepended + leadRows - previousLeadRows;
+		// Scroll by the rows added or trimmed above, during the same layout pass, so the view holds
+		// still. The lead rows sit above them, so their height change counts too. scrollTo would
+		// clamp against the previous frame's content height.
+		if (selection.rowsAddedAbove !== 0) {
+			const shift = selection.rowsAddedAbove + leadRows - previousLeadRows;
 			Reflect.set(view, "currentScrollTop", view.scrollTop + shift);
 		}
 		return [...lead, ...visible];
