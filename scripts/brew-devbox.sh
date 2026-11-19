@@ -18,5 +18,4 @@ brew install \
   tmux \
   aviator-co/tap/av
 
-# Figma paste
-npx --yes github:figma/paste#v0.1.6 setup --no-login
+bash "$(dirname "${BASH_SOURCE[0]}")/paste.sh"

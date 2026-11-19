@@ -10,7 +10,8 @@ Personal bootstrap repo for setting up a new Mac laptop or a Linux devbox/sandbo
 ## Layout
 
 - `scripts/` — installer logic. Each top-level step has its own script:
-  - `brew.sh` / `brew-devbox.sh` — Homebrew packages (laptop vs devbox), plus the `figma/paste` setup.
+  - `brew.sh` / `brew-devbox.sh` — Homebrew packages (laptop vs devbox); both run `paste.sh`.
+  - `paste.sh` — runs `figma/paste` setup, then copies its MCP entry into `~/.pi/agent/mcp.json`, which paste setup does not configure.
   - `dotfiles.sh` — installs `~/.zshrc`, `~/.tmux.conf`, Codex config and agents into `~/.codex/`, Codex skills into `~/.agents/skills/`, Codex prompts into `~/.codex/prompts/`, and Pi prompts, extensions, rules, `AGENTS.md`, and `tui.json` into `~/.pi/agent/` (then `npm ci` plus `dotfiles/pi/patches/` for extension packages).
   - `configs.sh` — installs Cursor and VS Code `settings.json` and `keybindings.json` (paths differ on macOS vs Linux).
   - `scripts.sh` — copies helper scripts into `~/.local/bin/` (currently `terminal-title`).
