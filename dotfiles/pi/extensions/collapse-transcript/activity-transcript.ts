@@ -154,6 +154,7 @@ export class ActivityTranscript extends ComponentStack {
 		return adapted;
 	}
 	private readonly sections = new Map<object, ActivitySection>();
+	private completedBeforeTurn: Set<object> | undefined;
 
 	constructor(
 		private readonly entries: () => readonly TranscriptEntry[],
@@ -163,6 +164,17 @@ export class ActivityTranscript extends ComponentStack {
 		private readonly now: () => number = Date.now,
 	) {
 		super();
+	}
+
+	beginTurn(includeExisting = false): void {
+		// Retries and automatic continuations belong to the same visible run.
+		this.completedBeforeTurn ??= new Set(includeExisting ? [] : this.entries().map((entry) => entry.key));
+		this.requestRender();
+	}
+
+	finishTurn(): void {
+		this.completedBeforeTurn = undefined;
+		this.requestRender();
 	}
 
 	render(width: number): string[] {
@@ -184,7 +196,8 @@ export class ActivityTranscript extends ComponentStack {
 		};
 		for (const source of this.entries()) {
 			const entry = this.adapt(source);
-			if (entry.kind !== "content") pending.push(entry);
+			if (entry.kind !== "content" && (!this.completedBeforeTurn || this.completedBeforeTurn.has(entry.key)))
+				pending.push(entry);
 			else {
 				flush();
 				children.push(entry.component);
