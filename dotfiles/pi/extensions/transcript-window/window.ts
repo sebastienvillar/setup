@@ -5,8 +5,9 @@ export const WINDOW_SIZE = 50;
 
 export interface ScrollState {
 	following: boolean;
-	scrollTop: number;
 	viewportHeight: number;
+	/** The user scrolled up while already at the top. */
+	revealOlder: boolean;
 }
 
 export interface WindowSelection {
@@ -22,8 +23,8 @@ export interface WindowSelection {
  *
  * While following the end, keep the last WINDOW_SIZE children, extended until they fill two
  * viewports, so trimming the top never moves the visible rows. While scrolled away, keep the
- * same first child so appended or removed rows above cannot shift the view; reveal another
- * WINDOW_SIZE older children once the view reaches the top.
+ * same first child so appended or removed rows above cannot shift the view, and reveal
+ * WINDOW_SIZE older children each time the user scrolls up from the top.
  */
 export class TranscriptWindow {
 	private first: Component | undefined;
@@ -32,12 +33,10 @@ export class TranscriptWindow {
 	select(children: readonly Component[], scroll: ScrollState, height: (child: Component) => number): WindowSelection {
 		let start = scroll.following ? this.followingStart(children, scroll, height) : this.anchoredStart(children);
 		let prepended = 0;
-		if (!scroll.following) {
-			while (start > 0 && scroll.scrollTop + prepended === 0) {
-				const next = Math.max(0, start - WINDOW_SIZE);
-				for (let index = next; index < start; index++) prepended += height(children[index]!);
-				start = next;
-			}
+		if (!scroll.following && scroll.revealOlder && start > 0) {
+			const next = Math.max(0, start - WINDOW_SIZE);
+			for (let index = next; index < start; index++) prepended += height(children[index]!);
+			start = next;
 		}
 		this.first = children[start];
 		this.size = children.length - start;

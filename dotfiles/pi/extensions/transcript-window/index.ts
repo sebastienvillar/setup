@@ -53,44 +53,73 @@ function primaryScrollView(tui: TUI): ScrollView | undefined {
  * Pi mounts [header, resources, chat] as the first document child. The chat slot holds Pi's
  * Container, or a ComponentStack projection that collapse-transcript installs over it. Patch
  * whichever occupies the slot when the document renders, so extension load order is irrelevant.
+ * While the slot is windowed, the header and resources render inside it instead, only once
+ * nothing is trimmed; otherwise the session start would look adjacent to the latest entries.
  */
 function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 	const roots: unknown = Reflect.get(tui, "children");
 	const document: unknown = Array.isArray(roots) ? roots[0] : undefined;
 	if (!isListContainer(document) || document.children.length !== 3) return undefined;
 
+	const [header, resources] = document.children as [Component, Component];
 	const restores: (() => void)[] = [];
 	const patched = new WeakSet<object>();
+	const windowedSlots = new WeakSet<object>();
+
+	// Pi re-renders on its own (timers, the scrollbar hiding), so only an actual scroll-up
+	// request made while already at the top reveals older entries.
+	const watchedViews = new WeakSet<ScrollView>();
+	let revealRequested = false;
+	const watchTopScrolls = (view: ScrollView) => {
+		if (watchedViews.has(view)) return;
+		watchedViews.add(view);
+		const scrollBy = view.scrollBy;
+		const scrollToStart = view.scrollToStart;
+		restores.push(
+			patch(view, "scrollBy", (lines: number) => {
+				if (lines < 0 && view.scrollTop === 0) revealRequested = true;
+				return scrollBy.call(view, lines);
+			}),
+			patch(view, "scrollToStart", () => {
+				if (view.scrollTop === 0) revealRequested = true;
+				return scrollToStart.call(view);
+			}),
+		);
+	};
 
 	const notice = new Text("", 1, 0);
 	let noticeText = "";
-	let noticeRows = 0;
+	let leadRows = 0;
 
 	const windowed = (window: TranscriptWindow, children: Component[], width: number): Component[] => {
 		const view = primaryScrollView(tui);
 		if (!view) return children;
-		const scroll = { following: view.isFollowingEnd, scrollTop: view.scrollTop, viewportHeight: view.viewportHeight };
+		watchTopScrolls(view);
+		const scroll = { following: view.isFollowingEnd, viewportHeight: view.viewportHeight, revealOlder: revealRequested };
+		revealRequested = false;
 		const selection = window.select(children, scroll, (child) => child.render(width).length);
 		const { visible, hidden } = selection;
-		const previousNoticeRows = noticeRows;
 		if (hidden > 0) {
 			const count = countMessages(children.slice(0, hidden));
 			const text = theme.fg("muted", `Trimmed ${count} ${count === 1 ? "message" : "messages"}`);
 			if (text !== noticeText) notice.setText((noticeText = text));
-			noticeRows = notice.render(width).length;
-		} else noticeRows = 0;
+		}
+		const lead = hidden > 0 ? [notice] : [header, resources];
+		const previousLeadRows = leadRows;
+		leadRows = lead.reduce((rows, child) => rows + child.render(width).length, 0);
 		// Scroll down by the rows revealed above, during the same layout pass, so the view holds still.
-		// The notice sits above them, so its height change counts too. scrollTo would clamp against
-		// the previous frame's shorter content height.
+		// The lead rows sit above them, so their height change counts too. scrollTo would clamp
+		// against the previous frame's shorter content height.
 		if (selection.prepended > 0) {
-			const shift = selection.prepended + noticeRows - previousNoticeRows;
+			const shift = selection.prepended + leadRows - previousLeadRows;
 			Reflect.set(view, "currentScrollTop", view.scrollTop + shift);
 		}
-		return hidden > 0 ? [notice, ...visible] : visible;
+		return [...lead, ...visible];
 	};
 
 	const patchSlot = (slot: Component) => {
 		const window = new TranscriptWindow();
+		windowedSlots.add(slot);
 		if (isListStack(slot)) {
 			const render = slot.render;
 			const setChildren = slot.setChildren;
@@ -117,7 +146,7 @@ function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 					}
 				}),
 			);
-		}
+		} else windowedSlots.delete(slot);
 	};
 
 	const render = document.render;
@@ -128,7 +157,14 @@ function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 				patched.add(slot);
 				patchSlot(slot);
 			}
-			return render.call(document, width);
+			if (!slot || !windowedSlots.has(slot) || !primaryScrollView(tui)) return render.call(document, width);
+			const all = document.children;
+			document.children = [slot];
+			try {
+				return render.call(document, width);
+			} finally {
+				document.children = all;
+			}
 		}),
 	);
 	tui.requestRender();
