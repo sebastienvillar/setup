@@ -1,7 +1,7 @@
 import type { Component } from "@earendil-works/pi-tui";
 
 /** Minimum number of trailing transcript children kept rendered. */
-export const WINDOW_SIZE = 50;
+export const WINDOW_SIZE = 3;
 
 export interface ScrollState {
 	following: boolean;
@@ -9,6 +9,8 @@ export interface ScrollState {
 	viewportHeight: number;
 	/** The user scrolled up while already at the top. */
 	revealOlder: boolean;
+	/** Another extension needs every child rendered, e.g. to scroll to an older entry. */
+	revealAll: boolean;
 }
 
 export interface WindowSelection {
@@ -36,7 +38,10 @@ export class TranscriptWindow {
 	select(children: readonly Component[], scroll: ScrollState, height: (child: Component) => number): WindowSelection {
 		let start = scroll.following ? this.followingStart(children, scroll, height) : this.anchoredStart(children);
 		let rowsAddedAbove = 0;
-		if (!scroll.following && scroll.revealOlder && start > 0) {
+		if (scroll.revealAll) {
+			for (let index = 0; index < start; index++) rowsAddedAbove += height(children[index]!);
+			start = 0;
+		} else if (!scroll.following && scroll.revealOlder && start > 0) {
 			const next = Math.max(0, start - WINDOW_SIZE);
 			for (let index = next; index < start; index++) rowsAddedAbove += height(children[index]!);
 			start = next;

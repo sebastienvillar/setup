@@ -4,6 +4,12 @@ import { type Component, type ScrollView, Spacer, Text, type TUI } from "@earend
 import { TranscriptWindow } from "./window.ts";
 
 const WIDGET_KEY = "transcript-window.host";
+// KEEP_IN_SYNC(extensions/async-questions/ui/jump.ts#REVEAL_ALL)
+/**
+ * Set on the TUI while mounted. Calling it renders every transcript entry on the next frame, then
+ * calls `laidOut` once that frame's layout is current, before any later frame can trim again.
+ */
+const REVEAL_ALL = Symbol.for("transcript-window.revealAll");
 
 type Patchable = Record<string, unknown>;
 interface ListContainer extends Component {
@@ -70,6 +76,14 @@ function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 	// request made while already at the top reveals older entries.
 	const watchedViews = new WeakSet<ScrollView>();
 	let revealRequested = false;
+	let revealAllRequested = false;
+	const laidOutCallbacks: (() => void)[] = [];
+	Reflect.set(tui, REVEAL_ALL, (laidOut: () => void) => {
+		revealAllRequested = true;
+		laidOutCallbacks.push(laidOut);
+		tui.requestRender();
+	});
+	restores.push(() => Reflect.deleteProperty(tui, REVEAL_ALL));
 	const watchTopScrolls = (view: ScrollView) => {
 		if (watchedViews.has(view)) return;
 		watchedViews.add(view);
@@ -100,8 +114,12 @@ function mount(tui: TUI, theme: Theme): (() => void) | undefined {
 			scrollTop: view.scrollTop,
 			viewportHeight: view.viewportHeight,
 			revealOlder: revealRequested,
+			revealAll: revealAllRequested,
 		};
 		revealRequested = false;
+		revealAllRequested = false;
+		// The frame renders synchronously, so a microtask runs after it stores the new layout.
+		for (const laidOut of laidOutCallbacks.splice(0)) queueMicrotask(laidOut);
 		const selection = window.select(children, scroll, (child) => child.render(width).length);
 		const { visible, hidden } = selection;
 		if (hidden > 0) {

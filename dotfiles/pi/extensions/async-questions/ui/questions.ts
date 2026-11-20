@@ -21,6 +21,7 @@ import {
 	tuiTheme,
 } from "./libtui.ts";
 import type { QuestionGroup } from "../core/state.ts";
+import { canJumpToQuestion, jumpToQuestion } from "./jump.ts";
 import type { Conversation } from "../runtime/conversation.ts";
 
 // libtui 0.3.9 predates the input hint/focus API used by upstream questions.
@@ -39,9 +40,10 @@ class QuestionInput extends SemanticInput {
 
 interface InlineQuestionsOptions {
 	// Pi renderers expose this public method, but the shared TUI interface omits it.
-	tui: Pick<TUI, "requestRender" | "setFocus"> & { getFocusedComponent?(): Component | null };
+	tui: TUI & { getFocusedComponent?(): Component | null };
 	theme: Theme;
 	onAnswer(group: QuestionGroup, answers: string[], dismissed: boolean): void;
+	onJumpMissing(): void;
 }
 
 /** A live question card above the editor; answering never opens an overlay. */
@@ -61,7 +63,7 @@ export class InlineQuestions extends DialogOverlay {
 			config.theme,
 			content,
 			() =>
-				`${icon("comment")} Question ${this.index + 1}/${this.group?.questions.length ?? 0}${this.pendingCount > 1 ? ` · ${this.pendingCount} pending` : ""}`,
+				`${icon("comment")} Question ${this.index + 1}/${this.group?.questions.length ?? 0}${this.pendingCount > 1 ? ` · ${this.pendingCount} pending` : ""}${canJumpToQuestion(config.tui) ? " · click to show in chat" : ""}`,
 		);
 		this.content = content;
 	}
@@ -87,6 +89,11 @@ export class InlineQuestions extends DialogOverlay {
 		this.config.tui.requestRender();
 	}
 
+	/** Scroll the transcript to where the current question was asked. */
+	jump(): void {
+		if (this.group) jumpToQuestion(this.config.tui, this.group.id, this.config.onJumpMissing);
+	}
+
 	blur(): void {
 		if (this.config.tui.getFocusedComponent?.() === this) this.config.tui.setFocus(this.previousFocus);
 		this.previousFocus = null;
@@ -94,7 +101,12 @@ export class InlineQuestions extends DialogOverlay {
 
 	// Pi 1.0 dispatches native mouse events; libtui's host still dispatches onMouse.
 	handleMouse(event: TuiMouseEvent): TuiMouseEventResult | undefined {
-		if (event.type === "click") return { handled: true }; // press/release already activated it
+		// The title row sits on the frame border, outside the dialog's child content.
+		if (event.y === 0 && (event.type === "press" || event.type === "release")) return { handled: true };
+		if (event.type === "click") {
+			if (event.y === 0) this.jump();
+			return { handled: true }; // press/release already activated the content
+		}
 		const handled = this.onMouse({
 			type: event.type,
 			row: event.y,
@@ -285,6 +297,7 @@ export class ConversationUI {
 							ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
 						}
 					},
+					onJumpMissing: () => ctx.ui.notify("This question is no longer in the transcript", "warning"),
 				});
 				this.widget.update(this.conversation.pending(ctx));
 				return this.widget;
@@ -295,6 +308,11 @@ export class ConversationUI {
 	focus(ctx: ExtensionContext): void {
 		this.update(ctx);
 		this.widget?.focus();
+	}
+
+	jump(ctx: ExtensionContext): void {
+		this.update(ctx);
+		this.widget?.jump();
 	}
 
 	dispose(): void {

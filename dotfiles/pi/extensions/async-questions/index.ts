@@ -2,7 +2,16 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
-import { ANSWER_ENTRY, answerData, answerMessage, RESPONSE_MESSAGE, undeliveredRecords } from "./core/state.ts";
+import {
+	ANSWER_ENTRY,
+	answerData,
+	answerMessage,
+	QUESTION_ENTRY,
+	questionGroup,
+	RESPONSE_MESSAGE,
+	undeliveredRecords,
+} from "./core/state.ts";
+import { questionAnchor } from "./ui/jump.ts";
 import { Conversation, type CoordinatorLookup } from "./runtime/conversation.ts";
 import { ConversationUI } from "./ui/questions.ts";
 import { answerRpcQuestions } from "./ui/rpc-questions.ts";
@@ -74,13 +83,32 @@ export default async function asyncQuestions(pi: ExtensionAPI): Promise<void> {
 		},
 	});
 	pi.registerCommand("questions", {
-		description: "Answer pending questions; /questions dismiss dismisses the oldest group",
+		description:
+			"Answer pending questions; /questions jump shows the oldest in chat; /questions dismiss dismisses it",
 		handler: async (args, ctx) => {
 			if (args.trim() === "dismiss") {
 				const group = conversation.pending(ctx)[0];
 				if (group) conversation.answer(ctx, group, [], true);
-			} else await open(ctx);
+			} else if (args.trim() === "jump") ui.jump(ctx);
+			else await open(ctx);
 		},
+	});
+	// The anchor lets the question card scroll the transcript back to where it was asked.
+	pi.registerEntryRenderer(QUESTION_ENTRY, (entry, _options, theme) => {
+		const group = questionGroup(entry.data);
+		if (!group) return new Text("", 0, 0);
+		const text = new Text(
+			theme.fg("muted", `Asked: ${group.questions.map((question) => question.title).join(" · ")}`),
+			0,
+			0,
+		);
+		return {
+			render: (width: number) => {
+				const [first, ...rest] = text.render(width);
+				return first === undefined ? [] : [questionAnchor(group.id) + first, ...rest];
+			},
+			invalidate: () => text.invalidate(),
+		};
 	});
 	pi.registerEntryRenderer(ANSWER_ENTRY, (entry, _options, theme) => {
 		const answer = answerData(entry.data);
